@@ -1,18 +1,14 @@
 <script lang="ts">
     import Task from "../models/task";
+    import TaskElement from "./Task.svelte";
     import {tick} from "svelte";
 
-    function randomId(length = 10) {
-        return Math.random().toString(36).substring(2, length + 2);
-    }
-
     export let tasks: Array<Task> = [];
-    $: {
-        console.log("tasks updated", tasks);
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
+    export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
 
-    let taskRefs: Map<string, HTMLInputElement> = new Map();
+    const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
+    const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
+    const times: Map<string, { start: string, finish: string }> = new Map();
     const canUndo = false, canRedo = false;// TODO:
     const undo = () => null;// TODO:
     const redo = undo;
@@ -21,22 +17,32 @@
     //     capacity: 10,
     // });
 
-    $: console.log("tasks updated", tasks);
+    $: {
+        console.log("tasks updated", tasks);
+        save(tasks);
+        recalculateTimes();
+    }
 
-    function findRef(el: Element | null) {
-        if (el) {
-            for (let taskId in taskRefs) {
-                if (taskRefs[taskId] === el) {
-                    return tasks.find(task => task.id === taskId);
-                    // return tasks.find(task => task.id === taskId) as Task;
-                }
+    function recalculateTimes() {
+        console.log("recalculateTimes"); // TODO: @ihoru
+        let lastTask: Task;
+        const gap = 5; // minutes
+        const startAt = new Date();
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            const duration = parseInt(task.duration);
+            if (task.done || !duration || duration <= 0) {
+
             }
+            // times[task.id] = {start: start, finish: finish};
         }
-        return null;
     }
 
     async function tasksReorder() {
-        let task: Task | null = findRef(document.activeElement);
+        const focusedAt = document.activeElement;
+        const refs = focusedAt?.classList.contains("title") ? taskTitleRefs : taskDurationRefs;
+        // noinspection JSUnresolvedReference
+        const focusedTaskId = focusedAt?.dataset.taskId;
         tasks = tasks.sort(function (taskA: Task, taskB: Task) {
             if (!taskA.done && taskB.done) {
                 return 1;
@@ -46,165 +52,19 @@
             }
             return 0;
         });
-        if (task) {
+        if (focusedTaskId) {
             await tick();
-            taskRefs[task!.id].focus();
+            refs[focusedTaskId].focus();
         }
-    }
-
-    function taskCheck(task: Task, index: number, focus: boolean = false) {
-        task.done = !task.done;
-        tasks = tasks;
-    }
-
-    function taskDelete(task: Task, index: number, focus: boolean = false) {
-        tasks.splice(index, 1);
-        tasks = tasks;
-        // TODO: focus previous or a new task
-        // console.log(history)
-    }
-
-    async function taskMoveUp(task: Task, index: number, focus: boolean = false) {
-        if (index === 0) {
-            return;
-        }
-        tasks[index] = tasks[index - 1];
-        tasks[index - 1] = task;
-        tasks = tasks;
-        if (focus) {
-            await tick();
-            taskRefs[task.id].focus();
-        }
-    }
-
-    async function taskMoveDown(task: Task, index: number, focus: boolean = false) {
-        if (index + 1 === tasks.length) {
-            return;
-        }
-        tasks[index] = tasks[index + 1];
-        tasks[index + 1] = task;
-        tasks = tasks;
-        if (focus) {
-            await tick();
-            taskRefs[task.id].focus();
-        }
-    }
-
-    async function taskMoveTop(task: Task, index: number, focus: boolean = false) {
-        // TODO: if current task is done prevent moving above other done tasks
-        console.log("taskMoveTop");
-
-        if (index === 0) {
-            return;
-        }
-        tasks.splice(index, 1);
-        tasks = [task, ...tasks];
-        if (focus) {
-            await tick();
-            taskRefs[task.id].focus();
-        }
-    }
-
-    async function taskMoveBottom(task: Task, index: number, focus: boolean = false) {
-        console.log("taskMoveBottom");
-        if (index + 1 === tasks.length) {
-            return;
-        }
-        tasks.splice(index, 1);
-        tasks.push(task);
-        tasks = tasks;
-        if (focus) {
-            await tick();
-            taskRefs[task.id].focus();
-        }
-    }
-
-    function taskFocusUp(index: number) {
-        if (index === 0) {
-            return;
-        }
-        const task = tasks[index - 1];
-        taskRefs[task.id].focus();
-    }
-
-    function taskFocusDown(index: number) {
-        if (index + 1 === tasks.length) {
-            return;
-        }
-        const task = tasks[index + 1];
-        taskRefs[task.id].focus();
-    }
-
-    async function taskAdd(index: number) {
-        const task = new Task(randomId(), "");
-        tasks.splice(index, 0, task);
-        tasks = tasks;
-        await tick();
-        taskRefs[task.id].focus();
-    }
-
-    function taskPaste(task: Task, index: number, event: ClipboardEvent) {
-        index += 1;
-        const text = event.clipboardData?.getData("text/plain");
-        if (text) {
-            const lines = text.split("\n");
-            if (lines.length > 1) {
-                const tasksToAdd = lines.map(line => new Task(randomId(), line.trim()));
-                tasks.splice(index, 0, ...tasksToAdd);
-                tasks = tasks;
-                tick().then(function () {
-                    taskRefs[tasksToAdd[0].id].focus();
-                });
-                event.preventDefault();
-                event.stopPropagation();
-            }
-        }
-    }
-
-    function taskInputKey(task: Task, index: number, event: KeyboardEvent) {
-        console.log("taskInputKey", event);
-        const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
-        const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
-        const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
-        const noSpecial = !event.altKey && !event.shiftKey && !event.ctrlKey;
-        if (noSpecial && event.key === "PageUp") {
-            taskRefs[tasks[0].id].focus();
-        } else if (noSpecial && event.key === "PageDown") {
-            taskRefs[tasks[tasks.length - 1].id].focus();
-        } else if (noSpecial && event.key === "Enter") {
-            taskCheck(task, index, true);
-        } else if (onlyAlt && event.key === "Delete") {
-            taskDelete(task, index, true);
-        } else if (onlyCtrl && event.key === "ArrowUp") {
-            taskMoveUp(task, index, true);
-        } else if (onlyCtrl && event.key === "ArrowDown") {
-            taskMoveDown(task, index, true);
-        } else if (onlyAlt && event.key === "ArrowUp") {
-            taskMoveTop(task, index, true);
-        } else if (onlyAlt && event.key === "ArrowDown") {
-            taskMoveBottom(task, index, true);
-        } else if (onlyShift && event.key === "Enter") {
-            taskAdd(index);
-        } else if (onlyCtrl && event.key === "Enter") {
-            taskAdd(index + 1);
-        } else if (noSpecial && event.key === "ArrowUp") {
-            taskFocusUp(index);
-        } else if (noSpecial && event.key === "ArrowDown") {
-            taskFocusDown(index);
-        } else {
-            return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
     }
 
     function appKeyUp(event: KeyboardEvent) {
-        console.log("appKeyUp", event);
+        // console.log("appKeyUp", event);
         if (event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "KeyZ") {
             undo();
         } else if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === "KeyZ") {
             redo();
-        } else if (event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "KeyS") {
+        } else if (event.ctrlKey && !event.shiftKey && event.altKey && event.code === "KeyS") {
             tasksReorder();
         } else {
             return;
@@ -212,6 +72,147 @@
         event.preventDefault();
     }
 
+    const taskActions = {
+        toggle(task: Task, index: number) {
+            task.done = !task.done;
+            tasks = tasks;
+        },
+
+        delete(task: Task, index: number) {
+            tasks.splice(index, 1);
+            tasks = tasks;
+        },
+
+        moveUp(task: Task, index: number) {
+            if (index === 0) {
+                return;
+            }
+            tasks[index] = tasks[index - 1];
+            tasks[index - 1] = task;
+            tasks = tasks;
+        },
+
+        moveDown(task: Task, index: number) {
+            if (index + 1 === tasks.length) {
+                return;
+            }
+            tasks[index] = tasks[index + 1];
+            tasks[index + 1] = task;
+            tasks = tasks;
+        },
+
+        moveTop(task: Task, index: number) {
+            if (index === 0) {
+                return;
+            }
+            let newIndex = 0;
+            for (let i = index - 1; i >= 0; i--) {
+                if (tasks[i].done) {
+                    newIndex = i + 1;
+                    break;
+                }
+            }
+            tasks.splice(index, 1);
+            tasks.splice(newIndex, 0, task);
+            tasks = tasks;
+        },
+
+        moveBottom(task: Task, index: number) {
+            if (index + 1 === tasks.length) {
+                return;
+            }
+            tasks.splice(index, 1);
+            tasks.push(task);
+            tasks = tasks;
+        },
+
+        add(index: number) {
+            const task = new Task();
+            tasks.splice(index, 0, task);
+            tasks = tasks;
+            return task;
+        },
+
+        async paste(task: Task, index: number, event: ClipboardEvent) {
+            index += 1;
+            const text = event.clipboardData?.getData("text/plain");
+            if (text) {
+                const lines = text.split("\n");
+                if (lines.length > 1) {
+                    const tasksToAdd = lines.map(
+                        line => line.trim(),
+                    ).filter(
+                        line => line.length > 0,
+                    ).map(line => new Task(line));
+                    tasks.splice(index, 0, ...tasksToAdd);
+                    tasks = tasks;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    await tick();
+                    taskTitleRefs[tasksToAdd[0].id].focus();
+                }
+            }
+        },
+
+        async inputKey(task: Task, index: number, event: KeyboardEvent, ref: HTMLInputElement) {
+            // console.log("taskInputKey", event, ref);
+            const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
+            const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
+            const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
+            const noSpecial = !event.altKey && !event.shiftKey && !event.ctrlKey;
+            const inputType = ref.classList.contains("title") ? "title" : "duration";
+            let focusOn;
+            let focusTask: Task | null;
+            if (noSpecial && event.key === "PageUp") {
+                focusTask = tasks[0];
+            } else if (noSpecial && event.key === "PageDown") {
+                focusTask = tasks[tasks.length - 1];
+            } else if (noSpecial && event.key === "ArrowUp") {
+                if (index) {
+                    focusTask = tasks[index - 1];
+                }
+            } else if (noSpecial && event.key === "ArrowDown") {
+                if (index + 1 < tasks.length) {
+                    focusTask = tasks[index + 1];
+                }
+            } else if (noSpecial && event.key === "Enter") {
+                this.toggle(task, index);
+            } else if (onlyAlt && event.key === "Delete") {
+                this.delete(task, index);
+                if (index < tasks.length) {
+                    focusTask = tasks[index];
+                }
+            } else if (onlyCtrl && event.key === "ArrowUp") {
+                this.moveUp(task, index);
+                focusOn = ref;
+            } else if (onlyCtrl && event.key === "ArrowDown") {
+                this.moveDown(task, index);
+                focusOn = ref;
+            } else if (onlyAlt && event.key === "ArrowUp") {
+                this.moveTop(task, index);
+                focusOn = ref;
+            } else if (onlyAlt && event.key === "ArrowDown") {
+                this.moveBottom(task, index);
+                focusOn = ref;
+            } else if (onlyShift && event.key === "Enter") {
+                focusTask = this.add(index);
+            } else if (onlyCtrl && event.key === "Enter") {
+                focusTask = this.add(index + 1);
+            } else {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            if (focusTask) {
+                focusOn = inputType === "title" ? taskTitleRefs[focusTask.id] : taskDurationRefs[focusTask.id];
+            }
+            if (focusOn) {
+                await tick();
+                focusOn.focus();
+            }
+        },
+
+    };
 </script>
 
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
@@ -222,48 +223,19 @@
     <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
     |
     <button on:click="{tasksReorder}" tabindex="-1">sort</button>
-    <button on:click="{() => taskAdd(tasks.length)}" tabindex="-1">add</button>
+    <button on:click="{() => taskActions.add(tasks.length)}" tabindex="-1">add</button>
 </div>
 <ul>
     {#each tasks as task, index (task.id)}
-        <li
-                class="task"
-                class:done="{task.done}"
-        >
-            <div class="actions">
-                <input type="checkbox" tabindex="-1"
-                       bind:checked="{task.done}"
-                >
-                <button tabindex="-1"
-                        on:click="{() => taskDelete(task, index)}"
-                >&cross;
-                </button>
-                <button tabindex="-1"
-                        on:click="{() => taskMoveUp(task, index)}"
-                >&uparrow;
-                </button>
-                <button tabindex="-1"
-                        on:click="{() => taskMoveDown(task, index)}"
-                >&downarrow;
-                </button>
-                <button tabindex="-1"
-                        on:click="{() => taskMoveTop(task, index)}"
-                >&upuparrows;
-                </button>
-                <button tabindex="-1"
-                        on:click="{() => taskMoveBottom(task, index)}"
-                >&downdownarrows;
-                </button>
-            </div>
-            <div class="content">
-                <input bind:this="{taskRefs[task.id]}"
-                       bind:value="{task.title}"
-                       on:keydown="{(event) => taskInputKey(task, index, event)}"
-                       on:paste="{(event) => taskPaste(task, index, event)}"
-                       tabindex="{task.done ? -1 : 0}"
-                />
-            </div>
-        </li>
+        <TaskElement
+                bind:refDuration="{taskDurationRefs[task.id]}"
+                bind:refTitle="{taskTitleRefs[task.id]}"
+                {task}
+                {index}
+                actions="{taskActions}"
+                startTime="{times[task.id]?.start}"
+                finishTime="{times[task.id]?.finish}"
+        />
     {/each}
 </ul>
 
@@ -273,40 +245,9 @@
         list-style: none;
     }
 
-
     h1,
     .history {
         text-align: center;
-    }
-
-    .task {
-        margin: 2px;
-        padding: 5px;
-        border: 1px solid #ccc;
-        display: flex;
-    }
-
-    .task .actions {
-        flex: 1;
-    }
-
-    .task > * {
-        display: flex;
-        justify-content: space-evenly;
-    }
-
-    .task .content {
-        flex: 2;
-    }
-
-    .task .content input {
-        width: 100%;
-        border: 1px solid #eee;
-        padding: 3px;
-    }
-
-    .task.done {
-        opacity: .5;
     }
 
 </style>
