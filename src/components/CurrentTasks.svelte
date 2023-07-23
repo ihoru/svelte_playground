@@ -2,13 +2,15 @@
     import Task from "../models/task";
     import TaskElement from "./Task.svelte";
     import {tick} from "svelte";
+    import addMinutes from "date-fns/addMinutes";
+    import format from "date-fns/format";
+    import debounce from "lodash/debounce";
 
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
-    const times: Map<string, { start: string, finish: string }> = new Map();
     const canUndo = false, canRedo = false;// TODO:
     const undo = () => null;// TODO:
     const redo = undo;
@@ -17,24 +19,33 @@
     //     capacity: 10,
     // });
 
-    $: {
-        console.log("tasks updated", tasks);
-        save(tasks);
-        recalculateTimes();
+    const saveDebounced = debounce((t) => {
+        save(t);
+    }, 1000);
+
+    function tasksUpdated(newTasks) {
+        console.log("tasks updated", newTasks);
+        recalculateTimes(newTasks);
+        tasks = newTasks;
+        saveDebounced(newTasks);
     }
 
-    function recalculateTimes() {
-        console.log("recalculateTimes"); // TODO: @ihoru
+    function recalculateTimes(tasks) {
         let lastTask: Task;
+        let startAt = new Date();
+        startAt = addMinutes(startAt, 5 - startAt.getMinutes() % 5);
         const gap = 5; // minutes
-        const startAt = new Date();
+        let now = startAt;
         for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
             const duration = parseInt(task.duration);
             if (task.done || !duration || duration <= 0) {
-
+                continue;
             }
-            // times[task.id] = {start: start, finish: finish};
+            task.startTime = format(now, "HH:mm");
+            now = addMinutes(now, duration);
+            task.finishTime = format(now, "HH:mm");
+            now = addMinutes(now, gap);
         }
     }
 
@@ -143,7 +154,17 @@
                         line => line.trim(),
                     ).filter(
                         line => line.length > 0,
-                    ).map(line => new Task(line));
+                    ).map(line => {
+                        let v = line.split("\t");
+                        let title, duration;
+                        if (v.length === 1) {
+                            title = v[0];
+                        } else {
+                            duration = v[0];
+                            title = v[1];
+                        }
+                        return new Task(title, duration);
+                    });
                     tasks.splice(index, 0, ...tasksToAdd);
                     tasks = tasks;
                     event.preventDefault();
@@ -179,9 +200,10 @@
                 this.toggle(task, index);
             } else if (onlyAlt && event.key === "Delete") {
                 this.delete(task, index);
-                if (index < tasks.length) {
-                    focusTask = tasks[index];
+                if (index == tasks.length) {
+                    --index;
                 }
+                focusTask = tasks[index];
             } else if (onlyCtrl && event.key === "ArrowUp") {
                 this.moveUp(task, index);
                 focusOn = ref;
@@ -204,18 +226,27 @@
             event.preventDefault();
             event.stopPropagation();
             if (focusTask) {
+                await tick();
                 focusOn = inputType === "title" ? taskTitleRefs[focusTask.id] : taskDurationRefs[focusTask.id];
             }
             if (focusOn) {
-                await tick();
+                if (!focusTask) {
+                    await tick();
+                }
                 focusOn.focus();
             }
         },
 
+        updated() {
+            tasks = tasks;
+        },
     };
+
+    $: tasksUpdated(tasks);
 </script>
 
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
+<svelte:window on:beforeunload="{() => save(tasks)}"></svelte:window>
 
 <h1>My tasks for today </h1>
 <div class="history">
@@ -233,8 +264,6 @@
                 {task}
                 {index}
                 actions="{taskActions}"
-                startTime="{times[task.id]?.start}"
-                finishTime="{times[task.id]?.finish}"
         />
     {/each}
 </ul>
