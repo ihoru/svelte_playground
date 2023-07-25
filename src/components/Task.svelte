@@ -13,6 +13,7 @@
         class="task"
         class:done="{task.done}"
 >
+    <span class="number">{task.number || ''}</span>
     <button on:click="{() => actions.toggle(task, index)}"
             tabindex="-1"
     >
@@ -42,10 +43,11 @@
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
-           data-task-id="{task.id}"
            min="0"
-           on:blur={actions.updated}
-           on:keydown={(event) => actions.inputKey(task, index, event, refDuration)}
+           on:input={actions.updated}
+           on:keydown={(event) => actions.inputKeyDown(task, index, event, refDuration)}
+           on:keyup={(event) => actions.inputKeyUp(task, index, event, refDuration)}
+           on:paste="{(event) => actions.paste(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
            type="number"
     />
@@ -53,9 +55,9 @@
     <input bind:this="{refTitle}"
            bind:value="{task.title}"
            class="title"
-           data-task-id="{task.id}"
-           on:blur={actions.updated}
-           on:keydown={(event) => actions.inputKey(task, index, event, refTitle)}
+           on:change={actions.updated}
+           on:keydown={(event) => actions.inputKeyDown(task, index, event, refTitle)}
+           on:keyup={(event) => actions.inputKeyUp(task, index, event, refTitle)}
            on:paste="{(event) => actions.paste(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
@@ -78,6 +80,12 @@
 
     .task > *:last-child {
         margin-right: 0;
+    }
+
+    .number {
+        width: 2rem;
+        text-align: center;
+        padding-top: 2px;
     }
 
     .task input {

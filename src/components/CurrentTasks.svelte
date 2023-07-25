@@ -18,19 +18,25 @@
     //     deep: true,
     //     capacity: 10,
     // });
+    let lastActiveElement;
+    let lastTasksJSON;
 
-    const saveDebounced = debounce((t) => {
-        save(t);
+    const saveDebounced = debounce(() => {
+        save(tasks);
     }, 1000);
 
-    function tasksUpdated(newTasks) {
-        console.log("tasks updated", newTasks);
-        recalculateTimes(newTasks);
-        tasks = newTasks;
-        saveDebounced(newTasks);
+    function tasksUpdated() {
+        console.debug("tasks updated", tasks);
+        recalculateTimes();
+        recalculateNumbers();
+        const tmp = JSON.stringify(tasks);
+        if (tmp !== lastTasksJSON) {
+            lastTasksJSON = tmp;
+            saveDebounced();
+        }
     }
 
-    function recalculateTimes(tasks) {
+    function recalculateTimes() {
         let lastTask: Task;
         let startAt = new Date();
         startAt = addMinutes(startAt, 5 - startAt.getMinutes() % 5);
@@ -40,6 +46,9 @@
             const task = tasks[i];
             const duration = parseInt(task.duration);
             if (task.done || !duration || duration <= 0) {
+                if (!task.done) {
+                    task.startTime = task.finishTime = "";
+                }
                 continue;
             }
             task.startTime = format(now, "HH:mm");
@@ -49,11 +58,9 @@
         }
     }
 
-    async function tasksReorder() {
+    async function tasksReorder(index) {
         const focusedAt = document.activeElement;
         const refs = focusedAt?.classList.contains("title") ? taskTitleRefs : taskDurationRefs;
-        // noinspection JSUnresolvedReference
-        const focusedTaskId = focusedAt?.dataset.taskId;
         tasks = tasks.sort(function (taskA: Task, taskB: Task) {
             if (!taskA.done && taskB.done) {
                 return 1;
@@ -63,30 +70,66 @@
             }
             return 0;
         });
-        if (focusedTaskId) {
+        if (focusedAt) {
             await tick();
-            refs[focusedTaskId].focus();
+            if (index == tasks.length) {
+                --index;
+            }
+            refs[tasks[index].id].focus();
+        }
+    }
+
+    async function addTaskToTheEnd() {
+        const task = taskActions.add(tasks.length);
+        await tick();
+        taskTitleRefs[task.id].focus();
+    }
+
+    function recalculateNumbers() {
+        let number = 0;
+        for (const t of tasks) {
+            if (t.done || !t.duration && !t.title) {
+                t.number = null;
+            } else {
+                t.number = ++number;
+            }
         }
     }
 
     function appKeyUp(event: KeyboardEvent) {
-        // console.log("appKeyUp", event);
+        console.debug("appKeyUp", event);
+        const activeElement = document.activeElement;
         if (event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "KeyZ") {
             undo();
         } else if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === "KeyZ") {
             redo();
-        } else if (event.ctrlKey && !event.shiftKey && event.altKey && event.code === "KeyS") {
-            tasksReorder();
+        } else if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter") {
+            addTaskToTheEnd();
+        } else if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "Escape") {
+            if (!lastActiveElement && tasks.length) {
+                lastActiveElement = taskTitleRefs[tasks[tasks.length - 1].id];
+            }
+            if (activeElement && activeElement.tagName === "INPUT") {
+                activeElement.blur();
+                lastActiveElement = activeElement;
+            } else if (lastActiveElement) {
+                lastActiveElement.focus();
+                lastActiveElement = null;
+            }
         } else {
             return;
         }
         event.preventDefault();
+        event.stopPropagation();
     }
 
     const taskActions = {
         toggle(task: Task, index: number) {
             task.done = !task.done;
-            tasks = tasks;
+            if (task.done && !task.duration && !task.title) {
+                tasks.splice(index, 1);
+            }
+            tasksReorder(index);
         },
 
         delete(task: Task, index: number) {
@@ -117,10 +160,12 @@
                 return;
             }
             let newIndex = 0;
-            for (let i = index - 1; i >= 0; i--) {
-                if (tasks[i].done) {
-                    newIndex = i + 1;
-                    break;
+            if (!tasks[index - 1].done) {
+                for (let i = index - 1; i >= 0; i--) {
+                    if (tasks[i].done) {
+                        newIndex = i + 1;
+                        break;
+                    }
                 }
             }
             tasks.splice(index, 1);
@@ -137,7 +182,10 @@
             tasks = tasks;
         },
 
-        add(index: number) {
+        add(index: number = null) {
+            if (!index) {
+                tasks.length;
+            }
             const task = new Task();
             tasks.splice(index, 0, task);
             tasks = tasks;
@@ -175,8 +223,9 @@
             }
         },
 
-        async inputKey(task: Task, index: number, event: KeyboardEvent, ref: HTMLInputElement) {
-            // console.log("taskInputKey", event, ref);
+        async inputKeyDown(task: Task, index: number, event: KeyboardEvent, ref: HTMLInputElement) {
+            // keydown event, so we can prevent default of (de)incrementing input type=number
+            console.debug("inputKeyUp", event);
             const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
             const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
             const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
@@ -184,26 +233,13 @@
             const inputType = ref.classList.contains("title") ? "title" : "duration";
             let focusOn;
             let focusTask: Task | null;
-            if (noSpecial && event.key === "PageUp") {
-                focusTask = tasks[0];
-            } else if (noSpecial && event.key === "PageDown") {
-                focusTask = tasks[tasks.length - 1];
-            } else if (noSpecial && event.key === "ArrowUp") {
-                if (index) {
-                    focusTask = tasks[index - 1];
-                }
-            } else if (noSpecial && event.key === "ArrowDown") {
-                if (index + 1 < tasks.length) {
-                    focusTask = tasks[index + 1];
-                }
-            } else if (noSpecial && event.key === "Enter") {
-                this.toggle(task, index);
-            } else if (onlyAlt && event.key === "Delete") {
-                this.delete(task, index);
-                if (index == tasks.length) {
-                    --index;
-                }
-                focusTask = tasks[index];
+            if (inputType === "duration" && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+                event.preventDefault();
+            }
+            if (noSpecial && event.key === "ArrowUp" && index) {
+                focusTask = tasks[index - 1];
+            } else if (noSpecial && event.key === "ArrowDown" && index + 1 < tasks.length) {
+                focusTask = tasks[index + 1];
             } else if (onlyCtrl && event.key === "ArrowUp") {
                 this.moveUp(task, index);
                 focusOn = ref;
@@ -216,10 +252,52 @@
             } else if (onlyAlt && event.key === "ArrowDown") {
                 this.moveBottom(task, index);
                 focusOn = ref;
-            } else if (onlyShift && event.key === "Enter") {
-                focusTask = this.add(index);
+            } else {
+                return;
+            }
+            if (focusTask) {
+                await tick();
+                focusOn = inputType === "title" ? taskTitleRefs[focusTask.id] : taskDurationRefs[focusTask.id];
+            }
+            if (focusOn) {
+                if (!focusTask) {
+                    await tick();
+                }
+                focusOn.focus();
+            }
+        },
+
+        async inputKeyUp(task: Task, index: number, event: KeyboardEvent, ref: HTMLInputElement) {
+            console.debug("inputKeyUp", event);
+            const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
+            const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
+            const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
+            const noSpecial = !event.altKey && !event.shiftKey && !event.ctrlKey;
+            const inputType = ref.classList.contains("title") ? "title" : "duration";
+            let focusOn;
+            let focusTask: Task | null;
+            if (event.key === "Delete" && (onlyAlt || noSpecial && !task.duration && !task.title)) {
+                this.delete(task, index);
+                if (index == tasks.length) {
+                    --index;
+                }
+                focusTask = tasks[index];
+            } else if (noSpecial && event.key === "PageUp") {
+                focusTask = tasks[0];
+            } else if (noSpecial && event.key === "PageDown") {
+                focusTask = tasks[tasks.length - 1];
+            } else if (noSpecial && event.key === "ArrowLeft" && inputType === "title" && !task.title) {
+                focusOn = taskDurationRefs[task.id];
+            } else if (noSpecial && event.key === "ArrowRight" && inputType === "duration" && !task.duration) {
+                focusOn = taskTitleRefs[task.id];
+            } else if (noSpecial && event.key === "Enter") {
+                this.toggle(task, index);
             } else if (onlyCtrl && event.key === "Enter") {
                 focusTask = this.add(index + 1);
+            } else if (onlyAlt) {
+                return;
+            } else if (onlyShift && event.key === "Enter") {
+                focusTask = this.add(index);
             } else {
                 return;
             }
@@ -242,7 +320,7 @@
         },
     };
 
-    $: tasksUpdated(tasks);
+    $: tasks && tasksUpdated();
 </script>
 
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
@@ -253,8 +331,7 @@
     <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
     <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
     |
-    <button on:click="{tasksReorder}" tabindex="-1">sort</button>
-    <button on:click="{() => taskActions.add(tasks.length)}" tabindex="-1">add</button>
+    <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
 </div>
 <ul>
     {#each tasks as task, index (task.id)}
