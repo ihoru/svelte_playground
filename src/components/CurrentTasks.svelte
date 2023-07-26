@@ -5,6 +5,8 @@
     import addMinutes from "date-fns/addMinutes";
     import format from "date-fns/format";
     import debounce from "lodash/debounce";
+    import type {TodoistTask} from "../lib/todoistAPI";
+    import {TodoistAPI} from "../lib/todoistAPI";
 
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
@@ -20,6 +22,9 @@
     // });
     let lastActiveElement;
     let lastTasksJSON;
+
+    const todoistAPI = new TodoistAPI(import.meta.env.MY_TODOIST_ACCESS_TOKEN);
+    let loading = false;
 
     const saveDebounced = debounce(() => {
         save(tasks);
@@ -83,6 +88,63 @@
         const task = taskActions.add(tasks.length);
         await tick();
         taskTitleRefs[task.id].focus();
+    }
+
+    async function fetchTodoistTasks() {
+        loading = true;
+        let todoistTasks;
+        try {
+            todoistTasks = await todoistAPI.getTasks();
+        } catch (e) {
+            console.error(e);
+            alert("Error fetching tasks from Todoist");
+            return;
+        } finally {
+            loading = false;
+        }
+        console.log("todoistTasks", todoistTasks);
+        const searchDuration = /( \d{1,2}[mh])$/i;
+        const titles = tasks.filter((task: Task) => task.title).map((task: Task) => task.title);
+        const tasksToAdd = todoistTasks.map(
+            (task: TodoistTask) => {
+                let title = task.content;
+                if (
+                    title.startsWith("*") ||
+                    title.endsWith("~") ||
+                    task.labels.indexOf("noplan") !== -1
+                ) {
+                    return;
+                }
+                let duration;
+                const hasDuration = title.match(searchDuration);
+                if (hasDuration) {
+                    title = title.slice(0, title.length - hasDuration[0].length);
+                    duration = hasDuration[0].trim();
+                    let multiplier = 1;
+                    const lastCharacter = duration[duration.length - 1];
+                    if (lastCharacter === "h") {
+                        multiplier = 60;
+                        duration = duration.slice(0, duration.length - 1);
+                    } else if (lastCharacter === "m") {
+                        duration = duration.slice(0, duration.length - 1);
+                    }
+                    duration = parseInt(duration) * multiplier;
+                }
+                if (titles.includes(title)) {
+                    return;
+                }
+                const todoistTaskId = task.id;
+                return new Task(title, duration, todoistTaskId);
+            },
+        ).filter(Boolean);
+        if (!tasksToAdd.length) {
+            alert("No tasks found in Todoist");
+            return;
+        }
+        tasks.splice(tasks.length - 1, 0, ...tasksToAdd);
+        tasks = tasks;
+        await tick();
+        taskTitleRefs[tasksToAdd[0].id].focus();
     }
 
     function recalculateNumbers() {
@@ -342,6 +404,10 @@
     <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
     |
     <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
+    <button disabled="{loading}" on:click="{fetchTodoistTasks}"
+            tabindex="-1"
+    >fetch tasks from Todoist
+    </button>
 </div>
 <ul>
     {#each tasks as task, index (task.id)}
