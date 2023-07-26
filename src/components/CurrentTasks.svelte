@@ -90,6 +90,10 @@
         taskTitleRefs[task.id].focus();
     }
 
+    async function clearTasks() {
+        tasks = [];
+    }
+
     async function fetchTodoistTasks() {
         loading = true;
         let todoistTasks;
@@ -404,6 +408,7 @@
     <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
     |
     <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
+    <button on:click="{clearTasks}" tabindex="-1">clear</button>
     <button disabled="{loading}" on:click="{fetchTodoistTasks}"
             tabindex="-1"
     >fetch tasks from Todoist
