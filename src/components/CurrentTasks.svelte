@@ -26,7 +26,7 @@
     }, 1000);
 
     function tasksUpdated() {
-        console.debug("tasks updated", tasks);
+        console.log("tasks updated", tasks);
         recalculateTimes();
         recalculateNumbers();
         const tmp = JSON.stringify(tasks);
@@ -137,21 +137,23 @@
             tasks = tasks;
         },
 
-        moveUp(task: Task, index: number) {
+        moveUp(task: Task, index: number, size = 1) {
             if (index === 0) {
                 return;
             }
-            tasks[index] = tasks[index - 1];
-            tasks[index - 1] = task;
+            const newIndex = Math.max(0, index - size);
+            tasks[index] = tasks[newIndex];
+            tasks[newIndex] = task;
             tasks = tasks;
         },
 
-        moveDown(task: Task, index: number) {
+        moveDown(task: Task, index: number, size = 1) {
             if (index + 1 === tasks.length) {
                 return;
             }
-            tasks[index] = tasks[index + 1];
-            tasks[index + 1] = task;
+            const newIndex = Math.min(tasks.length - 1, index + size);
+            tasks[index] = tasks[newIndex];
+            tasks[newIndex] = task;
             tasks = tasks;
         },
 
@@ -225,7 +227,7 @@
 
         async inputKeyDown(task: Task, index: number, event: KeyboardEvent, ref: HTMLInputElement) {
             // keydown event, so we can prevent default of (de)incrementing input type=number
-            console.debug("inputKeyUp", event);
+            console.debug("inputKeyDown", event);
             const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
             const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
             const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
@@ -233,28 +235,34 @@
             const inputType = ref.classList.contains("title") ? "title" : "duration";
             let focusOn;
             let focusTask: Task | null;
-            if (inputType === "duration" && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+            if (["ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(event.key)) {
                 event.preventDefault();
             }
+            const jumpSize = 5;
             if (noSpecial && event.key === "ArrowUp" && index) {
                 focusTask = tasks[index - 1];
             } else if (noSpecial && event.key === "ArrowDown" && index + 1 < tasks.length) {
                 focusTask = tasks[index + 1];
-            } else if (onlyCtrl && event.key === "ArrowUp") {
+            } else if (noSpecial && event.key === "PageUp") {
+                focusTask = tasks[Math.max(0, index - jumpSize)];
+            } else if (noSpecial && event.key === "PageDown") {
+                focusTask = tasks[Math.min(tasks.length - 1, index + jumpSize)];
+            } else if (onlyShift && event.key === "ArrowUp") {
                 this.moveUp(task, index);
-                focusOn = ref;
-            } else if (onlyCtrl && event.key === "ArrowDown") {
+            } else if (onlyShift && event.key === "ArrowDown") {
                 this.moveDown(task, index);
-                focusOn = ref;
+            } else if (onlyShift && event.key === "PageUp") {
+                this.moveUp(task, index, jumpSize);
+            } else if (onlyShift && event.key === "PageDown") {
+                this.moveDown(task, index, jumpSize);
             } else if (onlyAlt && event.key === "ArrowUp") {
                 this.moveTop(task, index);
-                focusOn = ref;
             } else if (onlyAlt && event.key === "ArrowDown") {
                 this.moveBottom(task, index);
-                focusOn = ref;
             } else {
                 return;
             }
+            focusOn = ref;
             if (focusTask) {
                 await tick();
                 focusOn = inputType === "title" ? taskTitleRefs[focusTask.id] : taskDurationRefs[focusTask.id];
@@ -282,10 +290,6 @@
                     --index;
                 }
                 focusTask = tasks[index];
-            } else if (noSpecial && event.key === "PageUp") {
-                focusTask = tasks[0];
-            } else if (noSpecial && event.key === "PageDown") {
-                focusTask = tasks[tasks.length - 1];
             } else if (noSpecial && event.key === "ArrowLeft" && inputType === "title" && !task.title) {
                 focusOn = taskDurationRefs[task.id];
             } else if (noSpecial && event.key === "ArrowRight" && inputType === "duration" && !task.duration) {
@@ -294,8 +298,14 @@
                 this.toggle(task, index);
             } else if (onlyCtrl && event.key === "Enter") {
                 focusTask = this.add(index + 1);
-            } else if (onlyAlt) {
-                return;
+            } else if (onlyAlt && event.key === "PageUp" && tasks.length) {
+                focusTask = tasks.find((t: Task) => {
+                    if (!t.done) {
+                        return t;
+                    }
+                }) || tasks[0];
+            } else if (onlyAlt && event.key === "PageDown" && tasks.length) {
+                focusTask = tasks[tasks.length - 1];
             } else if (onlyShift && event.key === "Enter") {
                 focusTask = this.add(index);
             } else {
@@ -357,4 +367,3 @@
     }
 
 </style>
-
