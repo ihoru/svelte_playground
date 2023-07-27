@@ -138,14 +138,15 @@
                     return;
                 }
                 const todoistTaskId = task.id;
-                return new Task(title, duration, todoistTaskId);
+                const todoistPriority = task.priority;
+                return new Task(title, duration, todoistTaskId, todoistPriority);
             },
         ).filter(Boolean);
         if (!tasksToAdd.length) {
             alert("No tasks found in Todoist");
             return;
         }
-        tasks.splice(tasks.length - 1, 0, ...tasksToAdd);
+        tasks.splice(tasks.length, 0, ...tasksToAdd);
         tasks = tasks;
         await tick();
         taskTitleRefs[tasksToAdd[0].id].focus();
@@ -433,6 +434,7 @@
 <style>
     ul {
         list-style: none;
+        margin: 0;
         padding: 0;
     }
 

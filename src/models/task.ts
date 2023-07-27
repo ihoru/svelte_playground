@@ -3,6 +3,7 @@ export default class Task {
         public title: string = "",
         public duration: number | null = null,
         public todoistTaskId: string = "",
+        public todoistPriority: number = 0,
         public number: number | null = null,
         public id: string = crypto.randomUUID(),
         public startTime: string | null = null,

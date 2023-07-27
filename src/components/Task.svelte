@@ -48,6 +48,7 @@
         <Fa fw icon="{faDownLong}"/>
     </button>
     <div class="start">{task.startTime || ''}</div>
+    <a class="priority" href="{task.getUrl()}">{task.todoistPriority}</a>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
