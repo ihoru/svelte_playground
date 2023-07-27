@@ -195,6 +195,9 @@
             task.done = !task.done;
             if (task.done && !task.duration && !task.title) {
                 tasks.splice(index, 1);
+            } else if (task.done && task.todoistTaskId && !task.todoistCompleted) {
+                task.todoistCompleted = true;
+                todoistAPI.complete(task.todoistTaskId);
             }
             tasksReorder(index);
         },

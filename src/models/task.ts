@@ -4,6 +4,7 @@ export default class Task {
         public duration: number | null = null,
         public todoistTaskId: string = "",
         public todoistPriority: number = 0,
+        public todoistCompleted: boolean = false,
         public number: number | null = null,
         public id: string = crypto.randomUUID(),
         public startTime: string | null = null,
