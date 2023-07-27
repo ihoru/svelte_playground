@@ -414,26 +414,36 @@
     >fetch tasks from Todoist
     </button>
 </div>
-<ul>
-    {#each tasks as task, index (task.id)}
-        <TaskElement
-                bind:refDuration="{taskDurationRefs[task.id]}"
-                bind:refTitle="{taskTitleRefs[task.id]}"
-                {task}
-                {index}
-                actions="{taskActions}"
-        />
-    {/each}
-</ul>
+{#if tasks.length}
+    <ul>
+        {#each tasks as task, index (task.id)}
+            <TaskElement
+                    bind:refDuration="{taskDurationRefs[task.id]}"
+                    bind:refTitle="{taskTitleRefs[task.id]}"
+                    {task}
+                    {index}
+                    actions="{taskActions}"
+            />
+        {/each}
+    </ul>
+{:else}
+    <div class="empty">No tasks yet</div>
+{/if}
 
 <style>
     ul {
-        padding: 0;
         list-style: none;
+        padding: 0;
     }
 
     h1,
     .history {
+        text-align: center;
+    }
+
+    .empty {
+        font-size: large;
+        padding: 10px;
         text-align: center;
     }
 

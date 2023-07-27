@@ -1,5 +1,8 @@
 <script lang="ts">
     import Task from "../models/task";
+    import Fa from "svelte-fa/src/fa.svelte";
+    import {faChevronDown, faChevronUp, faDownLong, faTrash, faUpLong} from "@fortawesome/free-solid-svg-icons";
+    import {faCircle, faCircleCheck} from "@fortawesome/free-regular-svg-icons";
 
     export let task: Task;
     export let index: number;
@@ -12,34 +15,39 @@
 <li
         class="task"
         class:done="{task.done}"
+        class:even="{index % 2 === 0}"
 >
-    <span class="number">{task.number || ''}</span>
+    <div class="number">{task.number || ''}</div>
     <button on:click="{() => actions.toggle(task, index)}"
             tabindex="-1"
     >
         {#if task.done}
-            &checkmark;
+            <Fa icon="{faCircleCheck}" fw/>
         {:else}
-            &circledast;
+            <Fa icon="{faCircle}" fw/>
         {/if}
     </button>
     <button on:click="{() => actions.moveUp(task, index)}"
             tabindex="-1"
-    >&uparrow;
+    >
+        <Fa fw icon="{faChevronUp}"/>
     </button>
     <button on:click="{() => actions.moveDown(task, index)}"
             tabindex="-1"
-    >&downarrow;
+    >
+        <Fa fw icon="{faChevronDown}"/>
     </button>
     <button on:click="{() => actions.moveTop(task, index)}"
             tabindex="-1"
-    >&upuparrows;
+    >
+        <Fa fw icon="{faUpLong}"/>
     </button>
     <button on:click="{() => actions.moveBottom(task, index)}"
             tabindex="-1"
-    >&downdownarrows;
+    >
+        <Fa fw icon="{faDownLong}"/>
     </button>
-    <span class="start">{task.startTime || ''}</span>
+    <div class="start">{task.startTime || ''}</div>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
@@ -51,7 +59,7 @@
            tabindex="{task.done ? -1 : 0}"
            type="number"
     />
-    <span class="finish">{task.finishTime || ''}</span>
+    <div class="finish">{task.finishTime || ''}</div>
     <input bind:this="{refTitle}"
            bind:value="{task.title}"
            class="title"
@@ -63,41 +71,66 @@
     />
     <button on:click="{() => actions.delete(task, index)}"
             tabindex="-1"
-    >&cross;
+    >
+        <Fa icon="{faTrash}"/>
     </button>
 </li>
 
 <style>
 
     .task {
-        padding: 1px 0;
+        --text-color: #333;
+
+        align-items: baseline;
+        color: var(--text-color);
         display: flex;
+        font-family: monospace;
+    }
+
+    .task.done {
+        opacity: .5;
+    }
+
+    .task.even {
+        background: #eeeeee;
     }
 
     .task > * {
-        margin-right: 3px;
+        margin-right: 5px;
     }
 
     .task > *:last-child {
         margin-right: 0;
     }
 
-    .number {
+    .task .number {
         width: 2rem;
         text-align: center;
-        padding-top: 2px;
     }
 
     .task input {
-        border: 1px solid #eee;
+        background: transparent;
+        border-style: none;
+        color: var(--text-color);
+        font-family: monospace;
+        outline-color: #f00;
         padding: 3px;
-        font-size: 15px;
+    }
+
+    .task.done .title {
+        text-decoration: line-through;
+    }
+
+    .task button {
+        background-color: transparent;
+        border-style: none;
+        color: var(--text-color);
+        width: 2rem;
     }
 
     .task .duration {
-        width: 30px;
-        margin-right: 3px;
         text-align: center;
+        width: 30px;
     }
 
     .task .title {
@@ -106,14 +139,8 @@
 
     .task .start,
     .task .finish {
-        width: 50px;
         text-align: center;
-        border: 1px solid #eee;
-        margin-right: 3px;
-    }
-
-    .task.done {
-        opacity: .5;
+        width: 5rem;
     }
 
     /*
