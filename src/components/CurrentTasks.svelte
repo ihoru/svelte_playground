@@ -7,6 +7,7 @@
     import debounce from "lodash/debounce";
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
+    import {dateFormat} from "../lib/utils";
 
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
@@ -197,7 +198,14 @@
                 tasks.splice(index, 1);
             } else if (task.done && task.todoistTaskId && !task.todoistCompleted) {
                 task.todoistCompleted = true;
-                todoistAPI.complete(task.todoistTaskId);
+                todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
+                    if (!todoistTask) {
+                        return;
+                    }
+                    if (!todoistTask.due || todoistTask.due.date === dateFormat()) {
+                        todoistAPI.complete(task.todoistTaskId);
+                    }
+                });
             }
             tasksReorder(index);
         },

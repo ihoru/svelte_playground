@@ -38,12 +38,16 @@ export class TodoistAPI {
         return data;
     }
 
+    getTask(taskId: string) {
+        return this._fetch<TodoistTask>(`tasks/${taskId}`);
+    }
+
     complete(taskId: string): Promise<boolean> {
         return this._fetch(`tasks/${taskId}/close`, {method: "POST"});
     }
 
     async postpone(taskId: string, dueDate: string) {
-        const task = await this._fetch<TodoistTask>(`tasks/${taskId}`);
+        const task = await this.getTask(taskId);
         if (!task || !task.due) {
             return "skip";
         }
