@@ -1,8 +1,14 @@
 <script lang="ts">
     import Task from "../models/task";
     import Fa from "svelte-fa/src/fa.svelte";
-    import {faChevronDown, faChevronUp, faDownLong, faTrash, faUpLong} from "@fortawesome/free-solid-svg-icons";
-    import {faCircle, faCircleCheck} from "@fortawesome/free-regular-svg-icons";
+    import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
+    import {faCircle} from "@fortawesome/free-regular-svg-icons/faCircle";
+    import {faChevronUp} from "@fortawesome/free-solid-svg-icons/faChevronUp";
+    import {faChevronDown} from "@fortawesome/free-solid-svg-icons/faChevronDown";
+    import {faUpLong} from "@fortawesome/free-solid-svg-icons/faUpLong";
+    import {faDownLong} from "@fortawesome/free-solid-svg-icons/faDownLong";
+    import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
+    import {faSquare} from "@fortawesome/free-solid-svg-icons/faSquare";
 
     export let task: Task;
     export let index: number;
@@ -48,7 +54,6 @@
         <Fa fw icon="{faDownLong}"/>
     </button>
     <div class="start">{task.startTime || ''}</div>
-    <a class="priority" href="{task.getUrl()}">{task.todoistPriority}</a>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
@@ -61,6 +66,22 @@
            type="number"
     />
     <div class="finish">{task.finishTime || ''}</div>
+    <a
+            class="priority priority{task.todoistPriority}"
+            class:priority1="{task.todoistPriority === 1}"
+            class:priority2="{task.todoistPriority === 2}"
+            class:priority3="{task.todoistPriority === 3}"
+            class:priority4="{task.todoistPriority === 4}"
+            href="{task.getUrl()}"
+            tabindex="-1"
+            target="_blank"
+    >
+        {#if task.todoistPriority > 0}
+            <Fa fw icon="{faSquare}"/>
+        {:else}
+            &nbsp;
+        {/if}
+    </a>
     <input bind:this="{refTitle}"
            bind:value="{task.title}"
            class="title"
@@ -73,7 +94,7 @@
     <button on:click="{() => actions.delete(task, index)}"
             tabindex="-1"
     >
-        <Fa icon="{faTrash}"/>
+        <Fa icon="{faXmark}"/>
     </button>
 </li>
 
@@ -104,12 +125,20 @@
         margin-right: 0;
     }
 
-    .task .number {
+    .number {
         width: 2rem;
         text-align: center;
     }
 
-    .task input {
+    button {
+        background-color: transparent;
+        border-style: none;
+        color: var(--text-color);
+        width: 2rem;
+        cursor: pointer;
+    }
+
+    input {
         background: transparent;
         border-style: none;
         color: var(--text-color);
@@ -122,26 +151,46 @@
         text-decoration: line-through;
     }
 
-    .task button {
-        background-color: transparent;
-        border-style: none;
-        color: var(--text-color);
-        width: 2rem;
-    }
-
-    .task .duration {
+    .duration {
         text-align: center;
         width: 30px;
     }
 
-    .task .title {
+    .title {
         width: 100%;
     }
 
-    .task .start,
-    .task .finish {
+    .start,
+    .finish {
         text-align: center;
         width: 5rem;
+    }
+
+    .priority {
+        width: 2rem;
+        text-align: center;
+        opacity: .8;
+        transition: opacity .2s ease-in-out;
+    }
+
+    .priority:hover {
+        opacity: 1;
+    }
+
+    .priority1, .priority1:visited, .priority1:active {
+        color: #808080;
+    }
+
+    .priority2, .priority2:visited, .priority2:active {
+        color: #246fe0;
+    }
+
+    .priority3, .priority3:visited, .priority3:active {
+        color: #eb8909;
+    }
+
+    .priority4, .priority4:visited, .priority4:active {
+        color: #d1453b;
     }
 
     /*

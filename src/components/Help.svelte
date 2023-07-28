@@ -15,6 +15,10 @@
 </details>
 
 <style>
+    details {
+        margin: 20px 0;
+    }
+
     summary {
         cursor: help;
     }

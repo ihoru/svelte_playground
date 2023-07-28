@@ -407,7 +407,7 @@
 <svelte:window on:beforeunload="{() => save(tasks)}"></svelte:window>
 
 <h1>My tasks for today </h1>
-<div class="history">
+<div class="panel">
     <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
     <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
     |
@@ -441,9 +441,13 @@
         padding: 0;
     }
 
-    h1,
-    .history {
+    h1 {
         text-align: center;
+    }
+
+    .panel {
+        text-align: center;
+        margin-bottom: 10px;
     }
 
     .empty {
