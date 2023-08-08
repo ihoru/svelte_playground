@@ -1,6 +1,6 @@
 <script lang="ts">
     import Task from "../models/task";
-    import TaskElement from "./Task.svelte";
+    import CurrentTask from "./CurrentTask.svelte";
     import {tick} from "svelte";
     import addMinutes from "date-fns/addMinutes";
     import format from "date-fns/format";
@@ -21,8 +21,8 @@
     //     deep: true,
     //     capacity: 10,
     // });
-    let lastActiveElement;
-    let lastTasksJSON;
+    let lastActiveElement: HTMLInputElement;
+    let lastTasksJSON: string;
 
     const todoistAPI = new TodoistAPI(import.meta.env.MY_TODOIST_ACCESS_TOKEN);
     let loading = false;
@@ -43,7 +43,6 @@
     }
 
     function recalculateTimes() {
-        let lastTask: Task;
         let startAt = new Date();
         startAt = addMinutes(startAt, 5 - startAt.getMinutes() % 5);
         const gap = 5; // minutes
@@ -64,7 +63,7 @@
         }
     }
 
-    async function tasksReorder(index) {
+    async function tasksReorder(index: number) {
         const focusedAt = document.activeElement;
         const refs = focusedAt?.classList.contains("title") ? taskTitleRefs : taskDurationRefs;
         tasks = tasks.sort(function (taskA: Task, taskB: Task) {
@@ -166,7 +165,7 @@
 
     function appKeyUp(event: KeyboardEvent) {
         console.debug("appKeyUp", event);
-        const activeElement = document.activeElement;
+        const activeElement: HTMLInputElement = document.activeElement as HTMLInputElement;
         if (event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "KeyZ") {
             undo();
         } else if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === "KeyZ") {
@@ -414,7 +413,6 @@
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
 <svelte:window on:beforeunload="{() => save(tasks)}"></svelte:window>
 
-<h1>My tasks for today </h1>
 <div class="panel">
     <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
     <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
@@ -427,9 +425,9 @@
     </button>
 </div>
 {#if tasks.length}
-    <ul>
+    <div class="current">
         {#each tasks as task, index (task.id)}
-            <TaskElement
+            <CurrentTask
                     bind:refDuration="{taskDurationRefs[task.id]}"
                     bind:refTitle="{taskTitleRefs[task.id]}"
                     {task}
@@ -437,7 +435,7 @@
                     actions="{taskActions}"
             />
         {/each}
-    </ul>
+    </div>
 {:else}
     <div class="empty">No tasks yet</div>
 {/if}
@@ -445,23 +443,26 @@
 <style>
     ul {
         list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    h1 {
-        text-align: center;
+        width: 100%;
     }
 
     .panel {
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 1rem;
     }
 
     .empty {
         font-size: large;
-        padding: 10px;
+        padding: 1rem;
         text-align: center;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 3fr 1fr;
+        grid-gap: 2px;
+    }
+    .grid > * {
+        border: 1px solid #f00;
     }
 
 </style>

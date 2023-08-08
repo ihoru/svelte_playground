@@ -18,7 +18,7 @@
 
 </script>
 
-<li
+<div
         class="task"
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
@@ -33,27 +33,7 @@
             <Fa icon="{faCircle}" fw/>
         {/if}
     </button>
-    <button on:click="{() => actions.moveUp(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faChevronUp}"/>
-    </button>
-    <button on:click="{() => actions.moveDown(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faChevronDown}"/>
-    </button>
-    <button on:click="{() => actions.moveTop(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faUpLong}"/>
-    </button>
-    <button on:click="{() => actions.moveBottom(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faDownLong}"/>
-    </button>
-    <div class="start">{task.startTime || ''}</div>
+    <div class="start">{task.startTime}</div>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
@@ -65,7 +45,7 @@
            tabindex="{task.done ? -1 : 0}"
            type="number"
     />
-    <div class="finish">{task.finishTime || ''}</div>
+    <div class="finish">{@html task.finishTime || '&nbsp;'}</div>
     <a
             class="priority priority{task.todoistPriority}"
             class:priority1="{task.todoistPriority === 1}"
@@ -91,22 +71,53 @@
            on:paste="{(event) => actions.paste(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
+    <button on:click="{() => actions.moveUp(task, index)}"
+            tabindex="-1"
+    >
+        <Fa fw icon="{faChevronUp}"/>
+    </button>
+    <button on:click="{() => actions.moveDown(task, index)}"
+            tabindex="-1"
+    >
+        <Fa fw icon="{faChevronDown}"/>
+    </button>
+    <button on:click="{() => actions.moveTop(task, index)}"
+            tabindex="-1"
+    >
+        <Fa fw icon="{faUpLong}"/>
+    </button>
+    <button on:click="{() => actions.moveBottom(task, index)}"
+            tabindex="-1"
+    >
+        <Fa fw icon="{faDownLong}"/>
+    </button>
     <button on:click="{() => actions.delete(task, index)}"
             tabindex="-1"
     >
         <Fa icon="{faXmark}"/>
     </button>
-</li>
+</div>
 
 <style>
-
     .task {
         --text-color: #333;
 
         align-items: baseline;
         color: var(--text-color);
-        display: flex;
+        /* display: flex; */
+        /* flex-wrap: wrap; */
+        display: grid;
+        grid-template-columns: 
+            1rem
+            2rem
+            3rem
+            2rem
+            3rem
+            2rem
+            minmax(12rem, auto)
+            repeat(5, 1.5rem);
         font-family: monospace;
+        width: 100%;
     }
 
     .task.done {
@@ -118,15 +129,14 @@
     }
 
     .task > * {
-        margin-right: 5px;
     }
 
     .task > *:last-child {
-        margin-right: 0;
+        /* margin-right: 0; */
     }
 
     .number {
-        width: 2rem;
+        /* width: 2rem; */
         text-align: center;
     }
 
@@ -134,7 +144,7 @@
         background-color: transparent;
         border-style: none;
         color: var(--text-color);
-        width: 2rem;
+        /* width: 2rem; */
         cursor: pointer;
     }
 
@@ -144,7 +154,7 @@
         color: var(--text-color);
         font-family: monospace;
         outline-color: #f00;
-        padding: 3px;
+        padding: 0;
     }
 
     .task.done .title {
@@ -153,21 +163,22 @@
 
     .duration {
         text-align: center;
-        width: 30px;
+        /* width: 3rem; */
     }
 
     .title {
-        width: 100%;
+        /* width: 100%; */
+        /* min-width: 20rem; */
     }
 
     .start,
     .finish {
         text-align: center;
-        width: 5rem;
+        /* width: 10rem; */
     }
 
     .priority {
-        width: 2rem;
+        /* width: 2rem; */
         text-align: center;
         opacity: .8;
         transition: opacity .2s ease-in-out;

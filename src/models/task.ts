@@ -1,3 +1,5 @@
+import { randomId } from "../lib/utils";
+
 export default class Task {
     constructor(
         public title: string = "",
@@ -6,7 +8,7 @@ export default class Task {
         public todoistPriority: number = 0,
         public todoistCompleted: boolean = false,
         public number: number | null = null,
-        public id: string = crypto.randomUUID(),
+        public id: string = randomId(),
         public startTime: string | null = null,
         public finishTime: string | null = null,
         public done: boolean = false,

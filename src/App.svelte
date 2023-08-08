@@ -13,7 +13,7 @@
     } catch (e) {
     }
     currentTasks = plainToInstance<Task>(Task, tmpCurrentTasks);
-
+    
     function saveCurrentTasks(tasks: Array<Task>) {
         localStorage.setItem("tasks", JSON.stringify(tasks));
     }
