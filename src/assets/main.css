@@ -16,7 +16,13 @@ body {
 }
 
 #app {
-    /* font-size: 1rem; */
+    --text-color: #333;
+
+    color: var(--text-color);
+}
+#app input,
+#app button {
+    color: var(--text-color);
 }
 
 input, button, select, textarea {

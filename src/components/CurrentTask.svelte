@@ -100,12 +100,7 @@
 
 <style>
     .task {
-        --text-color: #333;
-
         align-items: baseline;
-        color: var(--text-color);
-        /* display: flex; */
-        /* flex-wrap: wrap; */
         display: grid;
         grid-template-columns: 
             1rem
@@ -128,15 +123,7 @@
         background: #eeeeee;
     }
 
-    .task > * {
-    }
-
-    .task > *:last-child {
-        /* margin-right: 0; */
-    }
-
     .number {
-        /* width: 2rem; */
         text-align: center;
     }
 
@@ -144,7 +131,6 @@
         background-color: transparent;
         border-style: none;
         color: var(--text-color);
-        /* width: 2rem; */
         cursor: pointer;
     }
 

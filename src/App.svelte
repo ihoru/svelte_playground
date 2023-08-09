@@ -7,12 +7,12 @@
 
     // Restore tasks from local storage
     let currentTasks: Array<Task> = [];
-    let tmpCurrentTasks = localStorage.getItem("tasks") || "[]";
+    let tmpCurrentTasks: any = localStorage.getItem("tasks") || "[]";
     try {
         tmpCurrentTasks = JSON.parse(tmpCurrentTasks);
     } catch (e) {
     }
-    currentTasks = plainToInstance<Task>(Task, tmpCurrentTasks);
+    currentTasks = plainToInstance<Task, Array<object>>(Task, tmpCurrentTasks);
     
     function saveCurrentTasks(tasks: Array<Task>) {
         localStorage.setItem("tasks", JSON.stringify(tasks));

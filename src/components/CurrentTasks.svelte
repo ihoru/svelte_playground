@@ -49,7 +49,7 @@
         let now = startAt;
         for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
-            const duration = parseInt(task.duration);
+            const duration = task.duration;
             if (task.done || !duration || duration <= 0) {
                 if (!task.done) {
                     task.startTime = task.finishTime = "";
@@ -372,9 +372,8 @@
             } else if (noSpecial && event.key === "ArrowRight" && inputType === "duration" && !task.duration) {
                 focusOn = taskTitleRefs[task.id];
             } else if (noSpecial && event.key === "Enter") {
-                this.toggle(task, index);
-            } else if (onlyCtrl && event.key === "Enter") {
                 focusTask = this.add(index + 1);
+            } else if (onlyCtrl && event.key === "Enter") {
             } else if (onlyAlt && event.key === "PageUp" && tasks.length) {
                 focusTask = tasks.find((t: Task) => {
                     if (!t.done) {
@@ -383,6 +382,8 @@
                 }) || tasks[0];
             } else if (onlyAlt && event.key === "PageDown" && tasks.length) {
                 focusTask = tasks[tasks.length - 1];
+            } else if (onlyAlt && event.key === "Enter") {
+                this.toggle(task, index);
             } else if (onlyShift && event.key === "Enter") {
                 focusTask = this.add(index);
             } else {
@@ -413,10 +414,7 @@
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
 <svelte:window on:beforeunload="{() => save(tasks)}"></svelte:window>
 
-<div class="panel">
-    <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
-    <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
-    |
+<div class="panel top">
     <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
     <button on:click="{clearTasks}" tabindex="-1">clear</button>
     <button disabled="{loading}" on:click="{fetchTodoistTasks}"
@@ -424,45 +422,45 @@
     >fetch tasks from Todoist
     </button>
 </div>
-{#if tasks.length}
-    <div class="current">
-        {#each tasks as task, index (task.id)}
-            <CurrentTask
-                    bind:refDuration="{taskDurationRefs[task.id]}"
-                    bind:refTitle="{taskTitleRefs[task.id]}"
-                    {task}
-                    {index}
-                    actions="{taskActions}"
-            />
-        {/each}
-    </div>
-{:else}
-    <div class="empty">No tasks yet</div>
-{/if}
+<div class="content">
+    {#if tasks.length}
+        <div class="current">
+            {#each tasks as task, index (task.id)}
+                <CurrentTask
+                        bind:refDuration="{taskDurationRefs[task.id]}"
+                        bind:refTitle="{taskTitleRefs[task.id]}"
+                        {task}
+                        {index}
+                        actions="{taskActions}"
+                />
+            {/each}
+        </div>
+    {:else}
+        <div class="empty">No tasks yet</div>
+    {/if}
+</div>
+<div class="panel bottom">
+    <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
+    <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
+</div>
 
 <style>
-    ul {
-        list-style: none;
-        width: 100%;
-    }
-
     .panel {
         text-align: center;
-        margin-bottom: 1rem;
+    }
+
+    .panel button {
+        padding: .2rem .3rem;
+    }
+    
+    .content {
+        margin: 1rem 0;
     }
 
     .empty {
         font-size: large;
         padding: 1rem;
         text-align: center;
-    }
-    .grid {
-        display: grid;
-        grid-template-columns: 1fr 3fr 1fr;
-        grid-gap: 2px;
-    }
-    .grid > * {
-        border: 1px solid #f00;
     }
 
 </style>
