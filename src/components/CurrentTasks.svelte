@@ -8,6 +8,7 @@
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
     import {dateFormat} from "../lib/utils";
+	import {flip} from 'svelte/animate';
 
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
@@ -120,6 +121,7 @@
                     return;
                 }
                 let duration;
+                // TODO: add time start from Todoist
                 const hasDuration = title.match(searchDuration);
                 if (hasDuration) {
                     title = title.slice(0, title.length - hasDuration[0].length);
@@ -403,6 +405,36 @@
             }
         },
 
+        dragStart(event) {
+            console.log('start',event)
+            event.dataTransfer.setData("application/my-app", event.target.dataset.taskId);
+            event.dataTransfer.effectAllowed = "all";
+        },
+
+        dragDrop(event) {
+            console.log('drop',event)
+            const beforeTaskId = event.target.closest(".drag").dataset.taskId;
+            const dragTaskId = event.dataTransfer.getData("application/my-app");
+            const dragTask = tasks.find((task, i) => {
+                if (task.id == dragTaskId) {
+                    tasks.splice(i, 1);
+                    return task;
+                }
+            });
+            tasks.find((task, i) => {
+                if (task.id == beforeTaskId) {
+                    tasks.splice(i, 0, dragTask);
+                    return task;
+                }
+            });
+            tasks = tasks;
+            console.log(beforeTaskId, dragTaskId, dragTask)
+        },
+
+        dragOver(event) {
+            event.dataTransfer.dropEffect = "move";
+        },
+
         updated() {
             tasks = tasks;
         },
@@ -424,15 +456,28 @@
 </div>
 <div class="content">
     {#if tasks.length}
-        <div class="current">
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div
+            class="current"
+            on:drop|preventDefault={taskActions.dragDrop}
+            on:dragover|preventDefault={taskActions.dragOver}
+        >
             {#each tasks as task, index (task.id)}
+            <div
+                class="drag"
+                draggable="{true}"
+                on:dragstart="{taskActions.dragStart}"
+                animate:flip={{duration: 300}}
+                data-task-id="{task.id}"
+                >
                 <CurrentTask
                         bind:refDuration="{taskDurationRefs[task.id]}"
                         bind:refTitle="{taskTitleRefs[task.id]}"
                         {task}
                         {index}
                         actions="{taskActions}"
-                />
+                        />
+            </div>
             {/each}
         </div>
     {:else}

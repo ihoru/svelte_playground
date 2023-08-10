@@ -18,12 +18,16 @@
 
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
         class="task"
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
->
-    <div class="number">{task.number || ''}</div>
+        data-task-id="{task.id}"
+        >
+    <div class="number">{task.number ? `${task.number}.` : ''}</div>
+    <div class="start">{task.startTime}</div>
+    <div class="finish">{task.finishTime}</div>
     <button on:click="{() => actions.toggle(task, index)}"
             tabindex="-1"
     >
@@ -33,7 +37,6 @@
             <Fa icon="{faCircle}" fw/>
         {/if}
     </button>
-    <div class="start">{task.startTime}</div>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
@@ -45,7 +48,6 @@
            tabindex="{task.done ? -1 : 0}"
            type="number"
     />
-    <div class="finish">{@html task.finishTime || '&nbsp;'}</div>
     <a
             class="priority priority{task.todoistPriority}"
             class:priority1="{task.todoistPriority === 1}"
@@ -58,8 +60,6 @@
     >
         {#if task.todoistPriority > 0}
             <Fa fw icon="{faSquare}"/>
-        {:else}
-            &nbsp;
         {/if}
     </a>
     <input bind:this="{refTitle}"
@@ -103,12 +103,12 @@
         align-items: baseline;
         display: grid;
         grid-template-columns: 
+            2rem
+            4rem
+            4rem
+            2rem
+            2rem
             1rem
-            2rem
-            3rem
-            2rem
-            3rem
-            2rem
             minmax(12rem, auto)
             repeat(5, 1.5rem);
         font-family: monospace;
@@ -118,7 +118,7 @@
     .task.done {
         opacity: .5;
     }
-
+    
     .task.even {
         background: #eeeeee;
     }
