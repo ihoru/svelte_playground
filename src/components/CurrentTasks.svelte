@@ -30,9 +30,11 @@
     const todoistAPI = new TodoistAPI(import.meta.env.MY_TODOIST_ACCESS_TOKEN);
     let loading = false;
 
-    const saveDebounced = debounce(() => {
+    const debouncedSave = debounce(() => {
+        saveDebounced = false;
         save(tasks);
     }, 3000);
+    let saveDebounced = false;
 
     function tasksUpdated() {
         // console.log("tasks updated", tasks, ignoreNextTasksUpdate);
@@ -44,9 +46,16 @@
         }
         lastTasksHash = hash;
         if (!ignoreNextTasksUpdate) {
-            saveDebounced();
+            saveDebounced = true;
+            debouncedSave();
         }
         ignoreNextTasksUpdate = false;
+    }
+
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+        if (saveDebounced) {
+            save(tasks);
+        }
     }
 
     function recalculateTimes() {
@@ -450,7 +459,7 @@
 </script>
 
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
-<svelte:window on:beforeunload="{() => save(tasks)}"></svelte:window>
+<svelte:window on:beforeunload="{onBeforeUnload}"></svelte:window>
 
 <div class="panel top">
     <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
