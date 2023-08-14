@@ -9,6 +9,7 @@
     let currentTasks: Array<Task> = [];
     let currentTasksTimestamp: number = 0;
     let ignoreNextCurrentTasksUpdate: boolean = false;
+    let lastUpdateTimestamp: number = 0;
 
     function loadLocalCurrentTasks() {
         // console.log("local: load");
@@ -42,6 +43,7 @@
         const json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
         if (json.ok) {
             currentTasksTimestamp = timestamp;
+            lastUpdateTimestamp = (new Date()).getTime();
         } else {
             applyCurrentTasksFromServer(json);
             alert("Server has newer data");
@@ -52,6 +54,7 @@
     function applyCurrentTasksFromServer(json: object) {
         ignoreNextCurrentTasksUpdate = true;
         currentTasksTimestamp = parseInt(json.timestamp) || 0;
+        lastUpdateTimestamp = (new Date()).getTime();
         currentTasks = plainToInstance<Task, Array<object>>(Task, json.data);
         saveLocalCurrentTasks(currentTasks, currentTasksTimestamp);
     }
@@ -66,7 +69,20 @@
     loadLocalCurrentTasks();
     loadServerCurrentTasks();
 
+    function onWindowFocus() {
+        console.debug("window: focus");
+        const timestamp = (new Date()).getTime();
+        if (timestamp - lastUpdateTimestamp > 1000 * 60 * 5) {
+            lastUpdateTimestamp = (new Date()).getTime();
+            loadServerCurrentTasks();
+        }
+    }
+
 </script>
+
+<svelte:window
+        on:focus="{onWindowFocus}"
+></svelte:window>
 
 <main>
     <CurrentTasks
