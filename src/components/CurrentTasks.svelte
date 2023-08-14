@@ -4,7 +4,6 @@
     import {tick} from "svelte";
     import addMinutes from "date-fns/addMinutes";
     import format from "date-fns/format";
-    import debounce from "lodash/debounce";
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
     import {dateFormat} from "../lib/utils";
@@ -30,11 +29,23 @@
     const todoistAPI = new TodoistAPI(import.meta.env.MY_TODOIST_ACCESS_TOKEN);
     let loading = false;
 
-    const debouncedSave = debounce(() => {
-        saveDebounced = false;
-        save(tasks);
-    }, 3000);
-    let saveDebounced = false;
+    let saveTimeout;
+
+    function debouncedSave() {
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+        }
+        saveTimeout = setTimeout(() => {
+            save(tasks);
+        }, 2000);
+    }
+
+    function saveIfDebounced() {
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+            save(tasks);
+        }
+    }
 
     function tasksUpdated() {
         // console.log("tasks updated", tasks, ignoreNextTasksUpdate);
@@ -46,16 +57,9 @@
         }
         lastTasksHash = hash;
         if (!ignoreNextTasksUpdate) {
-            saveDebounced = true;
             debouncedSave();
         }
         ignoreNextTasksUpdate = false;
-    }
-
-    function onBeforeUnload(event: BeforeUnloadEvent) {
-        if (saveDebounced) {
-            save(tasks);
-        }
     }
 
     function recalculateTimes() {
@@ -459,7 +463,10 @@
 </script>
 
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
-<svelte:window on:beforeunload="{onBeforeUnload}"></svelte:window>
+<svelte:window
+        on:beforeunload="{saveIfDebounced}"
+        on:blur="{saveIfDebounced}"
+></svelte:window>
 
 <div class="panel top">
     <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>

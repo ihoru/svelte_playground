@@ -30,27 +30,37 @@
 
     async function loadServerCurrentTasks() {
         console.debug("server: load");
-        const response = await storage.get("tasks", currentTasksTimestamp);
+        const json = await storage.get("tasks", currentTasksTimestamp);
         console.debug("server: loaded");
-        if (response) {
-            ignoreNextCurrentTasksUpdate = true;
-            currentTasksTimestamp = parseInt(response.timestamp) || 0;
-            currentTasks = plainToInstance<Task, Array<object>>(Task, response.data);
-            saveLocalCurrentTasks(currentTasks, currentTasksTimestamp);
+        if (json) {
+            applyCurrentTasksFromServer(json);
         }
     }
 
-    async function saveServerCurrentTasks(tasks: string, timestamp: number) {
+    async function saveServerCurrentTasks(tasks: string, timestamp: number, oldTimestamp: number) {
         console.debug("server: save");
-        await storage.set("tasks", timestamp, tasks);
+        const json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
+        if (json.ok) {
+            currentTasksTimestamp = timestamp;
+        } else {
+            applyCurrentTasksFromServer(json);
+            alert("Server has newer data");
+        }
         console.debug("server: saved");
+    }
+
+    function applyCurrentTasksFromServer(json: object) {
+        ignoreNextCurrentTasksUpdate = true;
+        currentTasksTimestamp = parseInt(json.timestamp) || 0;
+        currentTasks = plainToInstance<Task, Array<object>>(Task, json.data);
+        saveLocalCurrentTasks(currentTasks, currentTasksTimestamp);
     }
 
     function saveCurrentTasks(tasks: Array<Task>) {
         console.info("! saveCurrentTasks");
         const timestamp = (new Date()).getTime();
         saveLocalCurrentTasks(tasks, timestamp);
-        saveServerCurrentTasks(tasks, timestamp);
+        saveServerCurrentTasks(tasks, timestamp, currentTasksTimestamp);
     }
 
     loadLocalCurrentTasks();

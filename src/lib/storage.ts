@@ -27,7 +27,7 @@ async function _fetch(path: string, body = null, params = null) {
     const json = await response.json();
     if (!json.ok) {
         console.info("Storage response is not ok", json);
-        return;
+        return json;
     }
     return json;
 }
@@ -36,6 +36,6 @@ export function get(key: string, timestamp: number = null) {
     return _fetch(key, null, {timestamp});
 }
 
-export function set(key: string, timestamp: number, value: any) {
-    return _fetch(`${key}/${timestamp}`, value);
+export function set(key: string, timestamp: number, oldTimestamp: number, value: any) {
+    return _fetch(`${key}/${timestamp}`, value, {oldTimestamp});
 }
