@@ -18,7 +18,6 @@
 
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
         class="task"
         class:done="{task.done}"

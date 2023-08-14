@@ -8,8 +8,10 @@
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
     import {dateFormat} from "../lib/utils";
-	import {flip} from 'svelte/animate';
+    import {flip} from "svelte/animate";
+    import {md5} from "pure-md5";
 
+    export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
 
@@ -23,24 +25,28 @@
     //     capacity: 10,
     // });
     let lastActiveElement: HTMLInputElement;
-    let lastTasksJSON: string;
+    let lastTasksHash: string;
 
     const todoistAPI = new TodoistAPI(import.meta.env.MY_TODOIST_ACCESS_TOKEN);
     let loading = false;
 
     const saveDebounced = debounce(() => {
         save(tasks);
-    }, 1000);
+    }, 3000);
 
     function tasksUpdated() {
-        console.log("tasks updated", tasks);
+        // console.log("tasks updated", tasks, ignoreNextTasksUpdate);
         recalculateTimes();
         recalculateNumbers();
-        const tmp = JSON.stringify(tasks);
-        if (tmp !== lastTasksJSON) {
-            lastTasksJSON = tmp;
+        const hash = md5(JSON.stringify(tasks));
+        if (hash === lastTasksHash) {
+            return;
+        }
+        lastTasksHash = hash;
+        if (!ignoreNextTasksUpdate) {
             saveDebounced();
         }
+        ignoreNextTasksUpdate = false;
     }
 
     function recalculateTimes() {
@@ -406,13 +412,13 @@
         },
 
         dragStart(event) {
-            console.log('start',event)
+            console.debug("start", event);
             event.dataTransfer.setData("application/my-app", event.target.dataset.taskId);
             event.dataTransfer.effectAllowed = "all";
         },
 
         dragDrop(event) {
-            console.log('drop',event)
+            console.debug("drop", event);
             const beforeTaskId = event.target.closest(".drag").dataset.taskId;
             const dragTaskId = event.dataTransfer.getData("application/my-app");
             const dragTask = tasks.find((task, i) => {
@@ -428,7 +434,7 @@
                 }
             });
             tasks = tasks;
-            console.log(beforeTaskId, dragTaskId, dragTask)
+            // console.log(beforeTaskId, dragTaskId, dragTask);
         },
 
         dragOver(event) {
@@ -458,26 +464,26 @@
     {#if tasks.length}
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div
-            class="current"
-            on:drop|preventDefault={taskActions.dragDrop}
-            on:dragover|preventDefault={taskActions.dragOver}
+                class="current"
+                on:drop|preventDefault={taskActions.dragDrop}
+                on:dragover|preventDefault={taskActions.dragOver}
         >
             {#each tasks as task, index (task.id)}
-            <div
-                class="drag"
-                draggable="{true}"
-                on:dragstart="{taskActions.dragStart}"
-                animate:flip={{duration: 300}}
-                data-task-id="{task.id}"
+                <div
+                        class="drag"
+                        draggable="{true}"
+                        on:dragstart="{taskActions.dragStart}"
+                        animate:flip={{duration: 300}}
+                        data-task-id="{task.id}"
                 >
-                <CurrentTask
-                        bind:refDuration="{taskDurationRefs[task.id]}"
-                        bind:refTitle="{taskTitleRefs[task.id]}"
-                        {task}
-                        {index}
-                        actions="{taskActions}"
-                        />
-            </div>
+                    <CurrentTask
+                            bind:refDuration="{taskDurationRefs[task.id]}"
+                            bind:refTitle="{taskTitleRefs[task.id]}"
+                            {task}
+                            {index}
+                            actions="{taskActions}"
+                    />
+                </div>
             {/each}
         </div>
     {:else}
@@ -497,7 +503,7 @@
     .panel button {
         padding: .2rem .3rem;
     }
-    
+
     .content {
         margin: 1rem 0;
     }
