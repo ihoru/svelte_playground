@@ -10,6 +10,7 @@
     let currentTasksTimestamp: number = 0;
     let ignoreNextCurrentTasksUpdate: boolean = false;
     let lastUpdateTimestamp: number = 0;
+    let storageError: string = null;
 
     function loadLocalCurrentTasks() {
         // console.log("local: load");
@@ -31,7 +32,13 @@
 
     async function loadServerCurrentTasks() {
         console.debug("server: load");
-        const json = await storage.get("tasks", currentTasksTimestamp);
+        try {
+            const json = await storage.get("tasks", currentTasksTimestamp);
+        } catch (e) {
+            storageError = e.toString();
+            console.error(e);
+            return;
+        }
         console.debug("server: loaded");
         if (json) {
             applyCurrentTasksFromServer(json);
@@ -40,7 +47,13 @@
 
     async function saveServerCurrentTasks(tasks: string, timestamp: number, oldTimestamp: number) {
         console.debug("server: save");
-        const json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
+        try {
+            const json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
+        } catch (e) {
+            storageError = e.toString();
+            console.error(e);
+            return;
+        }
         if (json.ok) {
             currentTasksTimestamp = timestamp;
             lastUpdateTimestamp = (new Date()).getTime();
@@ -91,4 +104,10 @@
             tasks="{currentTasks}"
     ></CurrentTasks>
     <Help/>
+    {#if storageError}
+        <div class="error">
+            Storage API returned an error: <br/>
+            <b>{storageError}</b>
+        </div>
+    {/if}
 </main>
