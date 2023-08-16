@@ -65,7 +65,7 @@
     function recalculateTimes() {
         let startAt = new Date();
         startAt = addMinutes(startAt, 5 - startAt.getMinutes() % 5);
-        const gap = 5; // minutes
+        const gap = 10; // minutes
         let now = startAt;
         for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
