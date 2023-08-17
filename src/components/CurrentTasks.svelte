@@ -48,7 +48,7 @@
     }
 
     function tasksUpdated() {
-        // console.log("tasks updated", tasks, ignoreNextTasksUpdate);
+        console.log("tasks updated", tasks);
         recalculateTimes();
         recalculateNumbers();
         const hash = md5(JSON.stringify(tasks));
@@ -102,6 +102,10 @@
             }
             refs[tasks[index].id].focus();
         }
+    }
+
+    function findTask(taskId) {
+        return tasks.find((task) => task.id === taskId);
     }
 
     async function addTaskToTheEnd() {
@@ -211,6 +215,8 @@
         event.stopPropagation();
     }
 
+    let activeDropZoneIndex: number;
+    let draggingTaskId: string = null;
     const taskActions = {
         toggle(task: Task, index: number) {
             task.done = !task.done;
@@ -396,11 +402,7 @@
                 focusTask = this.add(index + 1);
             } else if (onlyCtrl && event.key === "Enter") {
             } else if (onlyAlt && event.key === "PageUp" && tasks.length) {
-                focusTask = tasks.find((t: Task) => {
-                    if (!t.done) {
-                        return t;
-                    }
-                }) || tasks[0];
+                focusTask = tasks.find((t: Task) => !t.done) || tasks[0];
             } else if (onlyAlt && event.key === "PageDown" && tasks.length) {
                 focusTask = tasks[tasks.length - 1];
             } else if (onlyAlt && event.key === "Enter") {
@@ -424,34 +426,64 @@
             }
         },
 
+        dragHandleDown(event) {
+            event.target.closest(".task").setAttribute("draggable", "true");
+        },
+
+        dragHandleUp(event) {
+            event.target.closest(".task").removeAttribute("draggable");
+        },
+
         dragStart(event) {
             console.debug("start", event);
-            event.dataTransfer.setData("application/my-app", event.target.dataset.taskId);
-            event.dataTransfer.effectAllowed = "all";
+            const taskId = event.target.dataset.taskId;
+            const task = findTask(taskId);
+            event.dataTransfer.setDragImage(new Image(), 0, 0);
+            event.dataTransfer.setData("application/my-app", taskId);
+            event.dataTransfer.effectAllowed = "move";
+            setTimeout(function () {
+                // without this dragging even immediately ends
+                draggingTaskId = taskId;
+            });
         },
 
         dragDrop(event) {
-            console.debug("drop", event);
-            const beforeTaskId = event.target.closest(".drag").dataset.taskId;
+            let newIndex = parseInt(event.target.dataset.index);
+            console.debug("drop", event, newIndex);
             const dragTaskId = event.dataTransfer.getData("application/my-app");
-            const dragTask = tasks.find((task, i) => {
-                if (task.id == dragTaskId) {
-                    tasks.splice(i, 1);
-                    return task;
-                }
-            });
-            tasks.find((task, i) => {
-                if (task.id == beforeTaskId) {
-                    tasks.splice(i, 0, dragTask);
-                    return task;
-                }
-            });
+            const oldIndex = tasks.findIndex((task: Task) => task.id === dragTaskId);
+            const dragTask = tasks[oldIndex];
+            if (oldIndex < newIndex) {
+                --newIndex;
+            }
+            console.debug({dragTask, oldIndex, newIndex});
+            tasks.splice(oldIndex, 1);
+            tasks.splice(newIndex, 0, dragTask);
             tasks = tasks;
-            // console.log(beforeTaskId, dragTaskId, dragTask);
         },
 
         dragOver(event) {
+            // console.debug("over", event);
+            activeDropZoneIndex = parseInt(event.target.dataset.index);
+        },
+
+        dragEnd(event) {
+            console.debug("end", event);
+            event.target.closest(".task").removeAttribute("draggable");
+            activeDropZoneIndex = null;
+            draggingTaskId = null;
+        },
+
+        dragEnter(event) {
+            console.log("enter", event.target);
             event.dataTransfer.dropEffect = "move";
+            activeDropZoneIndex = parseInt(event.target.dataset.index);
+        },
+
+        dragLeave(event) {
+            console.log("leave", event.target);
+            event.dataTransfer.dropEffect = "none";
+            activeDropZoneIndex = null;
         },
 
         updated() {
@@ -478,19 +510,25 @@
 </div>
 <div class="content">
     {#if tasks.length}
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-                class="current"
-                on:drop|preventDefault={taskActions.dragDrop}
-                on:dragover|preventDefault={taskActions.dragOver}
+        <div class="current"
+             class:draggingActive={draggingTaskId !== null}
         >
+            <div class="dropZoneHolder">
+                <div
+                        class="dropZone"
+                        class:isActive="{activeDropZoneIndex === 0}"
+                        on:drop|preventDefault={taskActions.dragDrop}
+                        on:dragover|preventDefault={taskActions.dragOver}
+                        on:dragenter={taskActions.dragEnter}
+                        on:dragleave={taskActions.dragLeave}
+                        data-index="0"
+                >
+                    <hr/>
+                </div>
+            </div>
             {#each tasks as task, index (task.id)}
                 <div
-                        class="drag"
-                        draggable="{true}"
-                        on:dragstart="{taskActions.dragStart}"
                         animate:flip={{duration: 300}}
-                        data-task-id="{task.id}"
                 >
                     <CurrentTask
                             bind:refDuration="{taskDurationRefs[task.id]}"
@@ -498,7 +536,21 @@
                             {task}
                             {index}
                             actions="{taskActions}"
+                            isDragging="{draggingTaskId === task.id}"
                     />
+                    <div class="dropZoneHolder">
+                        <div
+                                class="dropZone"
+                                class:isActive="{activeDropZoneIndex === index + 1}"
+                                on:drop|preventDefault={taskActions.dragDrop}
+                                on:dragover|preventDefault={taskActions.dragOver}
+                                on:dragenter={taskActions.dragEnter}
+                                on:dragleave={taskActions.dragLeave}
+                                data-index="{index + 1}"
+                        >
+                            <hr/>
+                        </div>
+                    </div>
                 </div>
             {/each}
         </div>
@@ -530,4 +582,27 @@
         text-align: center;
     }
 
+    .dropZoneHolder {
+        position: relative;
+    }
+
+    .dropZone {
+        position: absolute;
+        width: 100%;
+    }
+
+    .draggingActive .dropZone {
+        padding: 0.9rem 0;
+        z-index: 1000;
+        top: -0.9rem;
+    }
+
+    .dropZone hr {
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 1);
+    }
+
+    .dropZone.isActive hr {
+        border-top: 1px solid gray;
+    }
 </style>

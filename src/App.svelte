@@ -32,8 +32,9 @@
 
     async function loadServerCurrentTasks() {
         console.debug("server: load");
+        let json;
         try {
-            const json = await storage.get("tasks", currentTasksTimestamp);
+            json = await storage.get("tasks", currentTasksTimestamp);
         } catch (e) {
             storageError = e.toString();
             console.error(e);
@@ -47,8 +48,9 @@
 
     async function saveServerCurrentTasks(tasks: string, timestamp: number, oldTimestamp: number) {
         console.debug("server: save");
+        let json;
         try {
-            const json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
+            json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
         } catch (e) {
             storageError = e.toString();
             console.error(e);

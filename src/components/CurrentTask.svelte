@@ -9,12 +9,14 @@
     import {faDownLong} from "@fortawesome/free-solid-svg-icons/faDownLong";
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
     import {faSquare} from "@fortawesome/free-solid-svg-icons/faSquare";
+    import {faBars} from "@fortawesome/free-solid-svg-icons/faBars";
 
     export let task: Task;
     export let index: number;
     export let refDuration: HTMLInputElement;
     export let refTitle: HTMLInputElement;
     export let actions;
+    export let isDragging: boolean;
 
 </script>
 
@@ -22,11 +24,27 @@
         class="task"
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
+        class:isDragging="{isDragging}"
+        on:dragend="{actions.dragEnd}"
+        on:dragstart="{actions.dragStart}"
         data-task-id="{task.id}"
-        >
+>
+    <button on:click="{() => actions.delete(task, index)}"
+            tabindex="-1"
+    >
+        <Fa icon="{faXmark}"/>
+    </button>
     <div class="number">{task.number ? `${task.number}.` : ''}</div>
     <div class="start">{task.startTime}</div>
     <div class="finish">{task.finishTime}</div>
+    <div class="dragHandle"
+         on:mousedown={actions.dragHandleDown}
+         on:mouseup={actions.dragHandleUp}
+         on:touchend|passive={actions.dragHandleUp}
+         on:touchstart|passive={actions.dragHandleDown}
+    >
+        <Fa fw icon="{faBars}"/>
+    </div>
     <button on:click="{() => actions.toggle(task, index)}"
             tabindex="-1"
     >
@@ -64,7 +82,7 @@
     <input bind:this="{refTitle}"
            bind:value="{task.title}"
            class="title"
-           on:change={actions.updated}
+           on:input={actions.updated}
            on:keydown={(event) => actions.inputKeyDown(task, index, event, refTitle)}
            on:keyup={(event) => actions.inputKeyUp(task, index, event, refTitle)}
            on:paste="{(event) => actions.paste(task, index, event)}"
@@ -90,36 +108,39 @@
     >
         <Fa fw icon="{faDownLong}"/>
     </button>
-    <button on:click="{() => actions.delete(task, index)}"
-            tabindex="-1"
-    >
-        <Fa icon="{faXmark}"/>
-    </button>
 </div>
 
 <style>
     .task {
         align-items: baseline;
         display: grid;
-        grid-template-columns: 
+        grid-template-columns:
+            1.2rem
             2rem
-            4rem
-            4rem
+            3.3rem
+            3.3rem
+            1.2rem
+            1.2rem
             2rem
-            2rem
-            1rem
+            1.2rem
             minmax(12rem, auto)
-            repeat(5, 1.5rem);
+            repeat(4, 1.2rem);
         font-family: monospace;
         width: 100%;
+        line-height: 2rem;
     }
 
     .task.done {
         opacity: .5;
     }
-    
+
     .task.even {
         background: #eeeeee;
+    }
+
+    .task.isDragging {
+        opacity: 0.5;
+        background-color: #ffffb4;
     }
 
     .number {
@@ -148,22 +169,21 @@
 
     .duration {
         text-align: center;
-        /* width: 3rem; */
+    }
+
+    .dragHandle {
+        cursor: grab;
     }
 
     .title {
-        /* width: 100%; */
-        /* min-width: 20rem; */
     }
 
     .start,
     .finish {
         text-align: center;
-        /* width: 10rem; */
     }
 
     .priority {
-        /* width: 2rem; */
         text-align: center;
         opacity: .8;
         transition: opacity .2s ease-in-out;
