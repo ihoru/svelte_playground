@@ -254,8 +254,8 @@
                 return;
             }
             const newIndex = Math.max(0, index - size);
-            tasks[index] = tasks[newIndex];
-            tasks[newIndex] = task;
+            tasks.splice(index, 1);
+            tasks.splice(newIndex, 0, task);
             tasks = tasks;
         },
 
@@ -264,8 +264,8 @@
                 return;
             }
             const newIndex = Math.min(tasks.length - 1, index + size);
-            tasks[index] = tasks[newIndex];
-            tasks[newIndex] = task;
+            tasks.splice(index, 1);
+            tasks.splice(newIndex, 0, task);
             tasks = tasks;
         },
 
