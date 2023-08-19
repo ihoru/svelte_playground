@@ -35,8 +35,11 @@
         <Fa icon="{faXmark}"/>
     </button>
     <div class="number">{task.number ? `${task.number}.` : ''}</div>
-    <div class="start">{task.startTime}</div>
-    <div class="finish">{task.finishTime}</div>
+    <div class="time">
+        {#if task.startTime && task.finishTime}
+            {task.startTime} &mdash; {task.finishTime}
+        {/if}
+    </div>
     <div class="dragHandle"
          on:mousedown={actions.dragHandleDown}
          on:mouseup={actions.dragHandleUp}
@@ -117,8 +120,7 @@
         grid-template-columns:
             1.2rem
             2rem
-            3.3rem
-            3.3rem
+            7.5rem
             1.2rem
             1.2rem
             2rem
@@ -178,8 +180,8 @@
     .title {
     }
 
-    .start,
-    .finish {
+    .time {
+        white-space: nowrap;
         text-align: center;
     }
 
