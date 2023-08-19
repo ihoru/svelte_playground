@@ -32,6 +32,7 @@
 
     async function loadServerCurrentTasks() {
         console.debug("server: load");
+        storageError = null;
         let json;
         try {
             json = await storage.get("tasks", currentTasksTimestamp);
@@ -48,6 +49,7 @@
 
     async function saveServerCurrentTasks(tasks: string, timestamp: number, oldTimestamp: number) {
         console.debug("server: save");
+        storageError = null;
         let json;
         try {
             json = await storage.set("tasks", timestamp, oldTimestamp, tasks);
