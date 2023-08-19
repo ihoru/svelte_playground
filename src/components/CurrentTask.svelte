@@ -29,34 +29,36 @@
         on:dragstart="{actions.dragStart}"
         data-task-id="{task.id}"
 >
-    <button on:click="{() => actions.delete(task, index)}"
-            tabindex="-1"
-    >
-        <Fa icon="{faXmark}"/>
-    </button>
-    <div class="number">{task.number ? `${task.number}.` : ''}</div>
+    <div class="number">{task.number || ''}</div>
     <div class="time">
         {#if task.startTime && task.finishTime}
             {task.startTime} &mdash; {task.finishTime}
         {/if}
     </div>
-    <div class="dragHandle"
-         on:mousedown={actions.dragHandleDown}
-         on:mouseup={actions.dragHandleUp}
-         on:touchend|passive={actions.dragHandleUp}
-         on:touchstart|passive={actions.dragHandleDown}
-    >
-        <Fa fw icon="{faBars}"/>
+    <div class="mainActions">
+        <button on:click="{() => actions.delete(task, index)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faXmark}"/>
+        </button>
+        <button class="dragHandle"
+                on:mousedown={actions.dragHandleDown}
+                on:mouseup={actions.dragHandleUp}
+                on:touchend|passive={actions.dragHandleUp}
+                on:touchstart|passive={actions.dragHandleDown}
+        >
+            <Fa fw icon="{faBars}"/>
+        </button>
+        <button on:click="{() => actions.toggle(task, index)}"
+                tabindex="-1"
+        >
+            {#if task.done}
+                <Fa icon="{faCircleCheck}" fw/>
+            {:else}
+                <Fa icon="{faCircle}" fw/>
+            {/if}
+        </button>
     </div>
-    <button on:click="{() => actions.toggle(task, index)}"
-            tabindex="-1"
-    >
-        {#if task.done}
-            <Fa icon="{faCircleCheck}" fw/>
-        {:else}
-            <Fa icon="{faCircle}" fw/>
-        {/if}
-    </button>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
            class="duration"
@@ -91,26 +93,32 @@
            on:paste="{(event) => actions.paste(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
-    <button on:click="{() => actions.moveUp(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faChevronUp}"/>
-    </button>
-    <button on:click="{() => actions.moveDown(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faChevronDown}"/>
-    </button>
-    <button on:click="{() => actions.moveTop(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faUpLong}"/>
-    </button>
-    <button on:click="{() => actions.moveBottom(task, index)}"
-            tabindex="-1"
-    >
-        <Fa fw icon="{faDownLong}"/>
-    </button>
+    <div class="additionalActions">
+        <button class="up"
+                on:click="{() => actions.moveUp(task, index)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faChevronUp}"/>
+        </button>
+        <button class="top"
+                on:click="{() => actions.moveTop(task, index)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faUpLong}"/>
+        </button>
+        <button class="up"
+                on:click="{() => actions.moveDown(task, index)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faChevronDown}"/>
+        </button>
+        <button class="bottom"
+                on:click="{() => actions.moveBottom(task, index)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faDownLong}"/>
+        </button>
+    </div>
 </div>
 
 <style>
@@ -118,15 +126,13 @@
         align-items: baseline;
         display: grid;
         grid-template-columns:
-            1.2rem
-            2rem
+            1.4rem
             7.5rem
-            1.2rem
-            1.2rem
+            5rem
             2rem
             1.2rem
             minmax(12rem, auto)
-            repeat(4, 1.2rem);
+            3rem;
         font-family: monospace;
         width: 100%;
         line-height: 2rem;
@@ -145,8 +151,14 @@
         background-color: #ffffb4;
     }
 
-    .number {
+    .task > div {
         text-align: center;
+    }
+
+    .number {
+        font-size: 0.9rem;
+        color: grey;
+        background-color: white;
     }
 
     button {
@@ -177,22 +189,23 @@
         cursor: grab;
     }
 
-    .title {
-    }
-
     .time {
         white-space: nowrap;
-        text-align: center;
+    }
+
+    .additionalActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        transform: translateY(-0.3rem);
+        height: 0;
+    }
+
+    .additionalActions button {
+        font-size: 0.8rem;
     }
 
     .priority {
         text-align: center;
-        opacity: .8;
-        transition: opacity .2s ease-in-out;
-    }
-
-    .priority:hover {
-        opacity: 1;
     }
 
     .priority1, .priority1:visited, .priority1:active {
