@@ -85,7 +85,15 @@
 
     async function tasksReorder(index: number) {
         const focusedAt = document.activeElement;
-        const refs = focusedAt?.classList.contains("title") ? taskTitleRefs : taskDurationRefs;
+        let refs;
+        if (focusedAt.tagName === "INPUT") {
+            const classList = focusedAt.classList;
+            if (classList.contains("duration")) {
+                refs = taskDurationRefs;
+            } else if (classList.contains("title")) {
+                refs = taskTitleRefs;
+            }
+        }
         tasks = tasks.sort(function (taskA: Task, taskB: Task) {
             if (!taskA.done && taskB.done) {
                 return 1;
@@ -95,7 +103,7 @@
             }
             return 0;
         });
-        if (focusedAt) {
+        if (refs) {
             await tick();
             if (index == tasks.length) {
                 --index;
