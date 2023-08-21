@@ -139,11 +139,22 @@
             loading = false;
         }
         console.log("todoistTasks", todoistTasks);
+        let taskUpdated = false;
         const searchDuration = /( \d{1,2}[mh])$/i;
-        const titles = tasks.filter((task: Task) => task.title).map((task: Task) => task.title);
         const tasksToAdd = todoistTasks.map(
             (task: TodoistTask) => {
                 let title = task.content;
+                const todoistTaskId = task.id;
+                const todoistPriority = task.priority;
+                const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
+                if (existingTask) {
+                    if (existingTask.title !== title || existingTask.priority !== todoistPriority) {
+                        existingTask.title = title;
+                        existingTask.todoistPriority = todoistPriority;
+                        taskUpdated = true;
+                    }
+                    return;
+                }
                 if (
                     title.startsWith("*") ||
                     title.endsWith("~") ||
@@ -152,30 +163,31 @@
                     return;
                 }
                 let duration;
-                // TODO: add time start from Todoist
-                const hasDuration = title.match(searchDuration);
-                if (hasDuration) {
-                    title = title.slice(0, title.length - hasDuration[0].length);
-                    duration = hasDuration[0].trim();
-                    let multiplier = 1;
-                    const lastCharacter = duration[duration.length - 1];
-                    if (lastCharacter === "h") {
-                        multiplier = 60;
-                        duration = duration.slice(0, duration.length - 1);
-                    } else if (lastCharacter === "m") {
-                        duration = duration.slice(0, duration.length - 1);
+                if (task.duration) {
+                    duration = task.duration.amount;
+                } else {
+                    const hasDuration = title.match(searchDuration);
+                    if (hasDuration) {
+                        title = title.slice(0, title.length - hasDuration[0].length);
+                        duration = hasDuration[0].trim();
+                        let multiplier = 1;
+                        const lastCharacter = duration[duration.length - 1];
+                        if (lastCharacter === "h") {
+                            multiplier = 60;
+                            duration = duration.slice(0, duration.length - 1);
+                        } else if (lastCharacter === "m") {
+                            duration = duration.slice(0, duration.length - 1);
+                        }
+                        duration = parseInt(duration) * multiplier;
                     }
-                    duration = parseInt(duration) * multiplier;
                 }
-                if (titles.includes(title)) {
-                    return;
-                }
-                const todoistTaskId = task.id;
-                const todoistPriority = task.priority;
                 return new Task(title, duration, todoistTaskId, todoistPriority);
             },
         ).filter(Boolean);
         if (!tasksToAdd.length) {
+            if (taskUpdated) {
+                tasks = tasks;
+            }
             alert("No tasks found in Todoist");
             return;
         }

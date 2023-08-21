@@ -6,6 +6,11 @@ export interface Due {
     timezone: string;
 }
 
+export interface Duration {
+    amount: number;
+    unit: "minute" | "day";
+}
+
 export interface TodoistTask {
     id: string;
     assigner_id: null;
@@ -22,7 +27,8 @@ export interface TodoistTask {
     comment_count: number;
     creator_id: string;
     created_at: string;
-    due: Due;
+    due?: Due;
+    duration?: Duration;
     url: string;
 }
 
