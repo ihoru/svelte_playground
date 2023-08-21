@@ -6,7 +6,7 @@
     import format from "date-fns/format";
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
-    import {dateFormat} from "../lib/utils";
+    import {dateFormat, isMobile} from "../lib/utils";
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
 
@@ -181,8 +181,10 @@
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
         tasks = tasks;
-        await tick();
-        taskTitleRefs[tasksToAdd[0].id].focus();
+        if (!isMobile()) {
+            await tick();
+            taskTitleRefs[tasksToAdd[0].id].focus();
+        }
     }
 
     function recalculateNumbers() {
