@@ -26,7 +26,8 @@
     let lastActiveElement: HTMLInputElement;
     let lastTasksHash: string;
 
-    const todoistAPI = new TodoistAPI(import.meta.env.MY_TODOIST_ACCESS_TOKEN);
+    const todoistAccessToken = import.meta.env.MY_TODOIST_ACCESS_TOKEN || "";
+    const todoistAPI = todoistAccessToken ? new TodoistAPI(todoistAccessToken) : null;
     let loading = false;
 
     let saveTimeout;
@@ -527,9 +528,10 @@
 <div class="panel top">
     <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
     <button on:click="{clearTasks}" tabindex="-1">clear</button>
-    <button disabled="{loading}" on:click="{fetchTodoistTasks}"
+    <button disabled="{!todoistAPI || loading}" on:click="{fetchTodoistTasks}"
             tabindex="-1"
     >fetch tasks from Todoist
+        {#if !todoistAPI}(empty access token){/if}
     </button>
 </div>
 <div class="content">
