@@ -102,16 +102,23 @@
 ></svelte:window>
 
 <main>
-    <CurrentTasks
-            save="{saveCurrentTasks}"
-            bind:ignoreNextTasksUpdate="{ignoreNextCurrentTasksUpdate}"
-            tasks="{currentTasks}"
-    ></CurrentTasks>
-    <Help/>
     {#if storageError}
         <div class="error">
             Storage API returned an error: <br/>
             <b>{storageError}</b>
         </div>
     {/if}
+    <CurrentTasks
+            save="{saveCurrentTasks}"
+            bind:ignoreNextTasksUpdate="{ignoreNextCurrentTasksUpdate}"
+            tasks="{currentTasks}"
+    ></CurrentTasks>
+    <Help/>
 </main>
+
+<style>
+    .error {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+</style>
