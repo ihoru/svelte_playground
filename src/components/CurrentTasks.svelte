@@ -75,7 +75,7 @@
             const duration = task.duration;
             if (task.done || !duration || duration <= 0) {
                 if (!task.done) {
-                    task.startTime = task.finishTime = "";
+                    task.startTime = task.finishTime = null;
                 }
                 continue;
             }
@@ -245,18 +245,26 @@
     const taskActions = {
         toggle(task: Task, index: number) {
             task.done = !task.done;
-            if (task.done && !task.duration && !task.title) {
-                tasks.splice(index, 1);
-            } else if (task.done && task.todoistTaskId && !task.todoistCompleted) {
-                task.todoistCompleted = true;
-                todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                    if (!todoistTask) {
-                        return;
+            if (task.done) {
+                if (!task.duration && !task.title) {
+                    // delete empty task
+                    tasks.splice(index, 1);
+                } else {
+                    task.startTime = null;
+                    task.finishTime = format(new Date(), "HH:mm");
+                    if (task.todoistTaskId && !task.todoistCompleted) {
+                        task.todoistCompleted = true;
+                        todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
+                            if (todoistTask && todoistTask.due && todoistTask.due.date === dateFormat()) {
+                                todoistAPI.complete(task.todoistTaskId);
+                            }
+                        }).catch(e => {
+                            console.error("todoistAPI failed", e);
+                        });
                     }
-                    if (!todoistTask.due || todoistTask.due.date === dateFormat()) {
-                        todoistAPI.complete(task.todoistTaskId);
-                    }
-                });
+                }
+            } else {
+
             }
             tasksReorder(index);
         },

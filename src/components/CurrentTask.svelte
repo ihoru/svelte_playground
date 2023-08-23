@@ -33,6 +33,8 @@
     <div class="time">
         {#if task.startTime && task.finishTime}
             {task.startTime} &mdash; {task.finishTime}
+        {:else if task.finishTime}
+            {task.finishTime}
         {/if}
     </div>
     <div class="mainActions">
