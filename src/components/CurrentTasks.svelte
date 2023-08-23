@@ -545,16 +545,16 @@
 <div class="content">
     {#if tasks.length}
         <div class="current"
-             class:draggingActive={draggingTaskId !== null}
+             class:draggingActive="{draggingTaskId !== null}"
         >
             <div class="dropZoneHolder">
                 <div
                         class="dropZone"
                         class:isActive="{activeDropZoneIndex === 0}"
-                        on:drop|preventDefault={taskActions.dragDrop}
-                        on:dragover|preventDefault={taskActions.dragOver}
-                        on:dragenter={taskActions.dragEnter}
-                        on:dragleave={taskActions.dragLeave}
+                        on:drop|preventDefault="{taskActions.dragDrop}"
+                        on:dragover|preventDefault="{taskActions.dragOver}"
+                        on:dragenter="{taskActions.dragEnter}"
+                        on:dragleave="{taskActions.dragLeave}"
                         data-index="0"
                 >
                     <hr/>
@@ -562,7 +562,7 @@
             </div>
             {#each tasks as task, index (task.id)}
                 <div
-                        animate:flip={{duration: 300}}
+                        animate:flip="{{duration: 300}}"
                 >
                     <CurrentTask
                             bind:refDuration="{taskDurationRefs[task.id]}"
@@ -576,10 +576,10 @@
                         <div
                                 class="dropZone"
                                 class:isActive="{activeDropZoneIndex === index + 1}"
-                                on:drop|preventDefault={taskActions.dragDrop}
-                                on:dragover|preventDefault={taskActions.dragOver}
-                                on:dragenter={taskActions.dragEnter}
-                                on:dragleave={taskActions.dragLeave}
+                                on:drop|preventDefault="{taskActions.dragDrop}"
+                                on:dragover|preventDefault="{taskActions.dragOver}"
+                                on:dragenter="{taskActions.dragEnter}"
+                                on:dragleave="{taskActions.dragLeave}"
                                 data-index="{index + 1}"
                         >
                             <hr/>

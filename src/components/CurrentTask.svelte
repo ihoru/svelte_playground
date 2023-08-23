@@ -44,10 +44,10 @@
             <Fa icon="{faXmark}"/>
         </button>
         <button class="dragHandle"
-                on:mousedown={actions.dragHandleDown}
-                on:mouseup={actions.dragHandleUp}
-                on:touchend|passive={actions.dragHandleUp}
-                on:touchstart|passive={actions.dragHandleDown}
+                on:mousedown="{actions.dragHandleDown}"
+                on:mouseup="{actions.dragHandleUp}"
+                on:touchend|passive="{actions.dragHandleUp}"
+                on:touchstart|passive="{actions.dragHandleDown}"
         >
             <Fa fw icon="{faBars}"/>
         </button>
@@ -65,9 +65,9 @@
            bind:value="{task.duration}"
            class="duration"
            min="0"
-           on:input={actions.updated}
-           on:keydown={(event) => actions.inputKeyDown(task, index, event, refDuration)}
-           on:keyup={(event) => actions.inputKeyUp(task, index, event, refDuration)}
+           on:input="{actions.updated}"
+           on:keydown="{(event) => actions.inputKeyDown(task, index, event, refDuration)}"
+           on:keyup="{(event) => actions.inputKeyUp(task, index, event, refDuration)}"
            on:paste="{(event) => actions.paste(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
            type="number"
@@ -89,9 +89,9 @@
     <input bind:this="{refTitle}"
            bind:value="{task.title}"
            class="title"
-           on:input={actions.updated}
-           on:keydown={(event) => actions.inputKeyDown(task, index, event, refTitle)}
-           on:keyup={(event) => actions.inputKeyUp(task, index, event, refTitle)}
+           on:input="{actions.updated}"
+           on:keydown="{(event) => actions.inputKeyDown(task, index, event, refTitle)}"
+           on:keyup="{(event) => actions.inputKeyUp(task, index, event, refTitle)}"
            on:paste="{(event) => actions.paste(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
