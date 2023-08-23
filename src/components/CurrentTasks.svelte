@@ -2,11 +2,11 @@
     import Task from "../models/task";
     import CurrentTask from "./CurrentTask.svelte";
     import {tick} from "svelte";
+    import addDays from "date-fns/addDays";
     import addMinutes from "date-fns/addMinutes";
-    import format from "date-fns/format";
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
-    import {dateFormat, isMobile} from "../lib/utils";
+    import * as utils from "../lib/utils";
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
 
@@ -79,9 +79,9 @@
                 }
                 continue;
             }
-            task.startTime = format(now, "HH:mm");
+            task.startTime = utils.timeFormat(now);
             now = addMinutes(now, duration);
-            task.finishTime = format(now, "HH:mm");
+            task.finishTime = utils.timeFormat(now);
             now = addMinutes(now, gap);
         }
     }
@@ -196,7 +196,7 @@
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
         tasks = tasks;
-        if (!isMobile()) {
+        if (!utils.isMobile()) {
             await tick();
             taskTitleRefs[tasksToAdd[0].id].focus();
         }
@@ -251,11 +251,16 @@
                     tasks.splice(index, 1);
                 } else {
                     task.startTime = null;
-                    task.finishTime = format(new Date(), "HH:mm");
+                    task.finishTime = utils.timeFormat();
                     if (task.todoistTaskId && !task.todoistCompleted) {
                         task.todoistCompleted = true;
                         todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                            if (todoistTask && todoistTask.due && todoistTask.due.date === dateFormat()) {
+                            if (
+                                todoistTask
+                                && !todoistTask.is_completed
+                                && todoistTask.due
+                                && todoistTask.due.date === utils.dateFormat()
+                            ) {
                                 todoistAPI.complete(task.todoistTaskId);
                             }
                         }).catch(e => {
@@ -272,6 +277,23 @@
         delete(task: Task, index: number) {
             tasks.splice(index, 1);
             tasks = tasks;
+        },
+
+        postponeTomorrow(task: Task, index: number) {
+            tasks.splice(index, 1);
+            tasks = tasks;
+            const dt = addDays(new Date(), 1);
+            const dueDate = utils.dateFormat(dt);
+            todoistAPI.postpone(task.todoistTaskId, dueDate);
+        },
+
+        postponeSaturday(task: Task, index: number) {
+            tasks.splice(index, 1);
+            tasks = tasks;
+            let dt = new Date();
+            dt = addDays(dt, 6 - dt.getDay());
+            const dueDate = utils.dateFormat(dt);
+            todoistAPI.postpone(task.todoistTaskId, dueDate);
         },
 
         moveUp(task: Task, index: number, size = 1) {

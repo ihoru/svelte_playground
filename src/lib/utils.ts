@@ -5,6 +5,11 @@ export function dateFormat(date: Date = null) {
     return format(date, "yyyy-MM-dd");
 }
 
+export function timeFormat(date: Date = null) {
+    date ??= new Date();
+    return format(date, "HH:mm");
+}
+
 export function randomId() {
     return window.URL.createObjectURL(new Blob([])).substring(31);
 }

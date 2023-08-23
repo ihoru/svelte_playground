@@ -54,8 +54,8 @@ export class TodoistAPI {
 
     async postpone(taskId: string, dueDate: string) {
         const task = await this.getTask(taskId);
-        if (!task || !task.due) {
-            return "skip";
+        if (!task || !task.due || task.is_completed) {
+            return;
         }
         // get current data, to preserve "is_recurring" state and time
         const payload = {};

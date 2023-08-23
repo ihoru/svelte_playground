@@ -1,5 +1,6 @@
 <script lang="ts">
     import Task from "../models/task";
+    import {longpress} from "../lib/actions";
     import Fa from "svelte-fa/src/fa.svelte";
     import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
     import {faCircle} from "@fortawesome/free-regular-svg-icons/faCircle";
@@ -10,6 +11,7 @@
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
     import {faSquare} from "@fortawesome/free-solid-svg-icons/faSquare";
     import {faBars} from "@fortawesome/free-solid-svg-icons/faBars";
+    import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
 
     export let task: Task;
     export let index: number;
@@ -43,21 +45,32 @@
         >
             <Fa icon="{faXmark}"/>
         </button>
+        {#if task.todoistTaskId}
+            <button class="postpone"
+                    use:longpress
+                    on:shortpress="{() => actions.postponeTomorrow(task, index)}"
+                    on:longpress="{() => actions.postponeSaturday(task, index)}"
+            >
+                <Fa icon="{faClock}"/>
+            </button>
+        {:else}
+            <span></span>
+        {/if}
         <button class="dragHandle"
                 on:mousedown="{actions.dragHandleDown}"
                 on:mouseup="{actions.dragHandleUp}"
                 on:touchend|passive="{actions.dragHandleUp}"
                 on:touchstart|passive="{actions.dragHandleDown}"
         >
-            <Fa fw icon="{faBars}"/>
+            <Fa icon="{faBars}"/>
         </button>
         <button on:click="{() => actions.toggle(task, index)}"
                 tabindex="-1"
         >
             {#if task.done}
-                <Fa icon="{faCircleCheck}" fw/>
+                <Fa icon="{faCircleCheck}"/>
             {:else}
-                <Fa icon="{faCircle}" fw/>
+                <Fa icon="{faCircle}"/>
             {/if}
         </button>
     </div>
@@ -83,7 +96,7 @@
             target="_blank"
     >
         {#if task.todoistPriority > 0}
-            <Fa fw icon="{faSquare}"/>
+            <Fa icon="{faSquare}"/>
         {/if}
     </a>
     <input bind:this="{refTitle}"
@@ -130,11 +143,11 @@
         grid-template-columns:
             1.4rem
             7.5rem
-            5rem
+            6.5rem
             2rem
             1.2rem
             minmax(12rem, auto)
-            3rem;
+            2.5rem;
         font-family: monospace;
         width: 100%;
         line-height: 2rem;
@@ -193,6 +206,11 @@
 
     .time {
         white-space: nowrap;
+    }
+
+    .mainActions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
     }
 
     .additionalActions {
