@@ -9,9 +9,9 @@
     import {faUpLong} from "@fortawesome/free-solid-svg-icons/faUpLong";
     import {faDownLong} from "@fortawesome/free-solid-svg-icons/faDownLong";
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
-    import {faSquare} from "@fortawesome/free-solid-svg-icons/faSquare";
     import {faBars} from "@fortawesome/free-solid-svg-icons/faBars";
     import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
+    import {faGripLinesVertical} from "@fortawesome/free-solid-svg-icons/faGripLinesVertical";
 
     export let task: Task;
     export let index: number;
@@ -96,7 +96,7 @@
             target="_blank"
     >
         {#if task.todoistPriority > 0}
-            <Fa icon="{faSquare}"/>
+            <Fa icon="{faGripLinesVertical}"/>
         {/if}
     </a>
     <input bind:this="{refTitle}"
@@ -145,7 +145,7 @@
             7.5rem
             6.5rem
             2rem
-            1.2rem
+            0.8rem
             minmax(12rem, auto)
             2.5rem;
         font-family: monospace;
@@ -226,6 +226,7 @@
 
     .priority {
         text-align: center;
+        opacity: 0.8;
     }
 
     .priority1, .priority1:visited, .priority1:active {
