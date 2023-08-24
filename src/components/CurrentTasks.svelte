@@ -73,7 +73,7 @@
         for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
             const duration = task.duration;
-            if (task.done || !duration || duration <= 0) {
+            if (task.done || task.postponed || !duration || duration <= 0) {
                 if (!task.done) {
                     task.startTime = task.finishTime = null;
                 }
@@ -202,7 +202,7 @@
     function recalculateNumbers() {
         let number = 0;
         for (const t of tasks) {
-            if (t.done || !t.duration && !t.title) {
+            if (t.done || t.postponed || !t.duration && !t.title) {
                 t.number = null;
             } else {
                 t.number = ++number;
@@ -277,7 +277,7 @@
         },
 
         postponeTomorrow(task: Task, index: number) {
-            tasks.splice(index, 1);
+            task.postponed = true;
             tasks = tasks;
             const dt = addDays(new Date(), 1);
             const dueDate = utils.dateFormat(dt);
@@ -285,7 +285,7 @@
         },
 
         postponeSaturday(task: Task, index: number) {
-            tasks.splice(index, 1);
+            task.postponed = true;
             tasks = tasks;
             let dt = new Date();
             dt = addDays(dt, 6 - dt.getDay());

@@ -25,6 +25,7 @@
 <div
         class="task"
         class:done="{task.done}"
+        class:postponed="{task.postponed}"
         class:even="{index % 2 === 0}"
         class:isDragging="{isDragging}"
         on:dragend="{actions.dragEnd}"
@@ -45,7 +46,7 @@
         >
             <Fa icon="{faXmark}"/>
         </button>
-        {#if task.todoistTaskId}
+        {#if task.todoistTaskId && !task.postponed}
             <button class="postpone"
                     use:longpress
                     on:shortpress="{() => actions.postponeTomorrow(task, index)}"
@@ -64,15 +65,19 @@
         >
             <Fa icon="{faBars}"/>
         </button>
-        <button on:click="{() => actions.toggle(task, index)}"
-                tabindex="-1"
-        >
-            {#if task.done}
-                <Fa icon="{faCircleCheck}"/>
-            {:else}
-                <Fa icon="{faCircle}"/>
-            {/if}
-        </button>
+        {#if !task.postponed}
+            <button on:click="{() => actions.toggle(task, index)}"
+                    tabindex="-1"
+            >
+                {#if task.done}
+                    <Fa icon="{faCircleCheck}"/>
+                {:else}
+                    <Fa icon="{faCircle}"/>
+                {/if}
+            </button>
+        {:else}
+            <span></span>
+        {/if}
     </div>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
@@ -153,7 +158,8 @@
         line-height: 2rem;
     }
 
-    .task.done {
+    .task.done,
+    .task.postponed {
         opacity: .5;
     }
 

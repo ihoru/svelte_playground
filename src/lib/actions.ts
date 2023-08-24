@@ -1,35 +1,38 @@
 export function longpress(node: Node, threshold: number = 300) {
-    let dt: Date;
-
     const onMouseDown = () => {
-        dt = new Date();
-    };
-    const onMouseUp = () => {
-        if (!dt) {
-            return;
-        }
-        const diff = (new Date()).getTime() - dt.getTime();
-        if (diff >= threshold) {
+        const timeout = setTimeout(() => {
             node.dispatchEvent(new CustomEvent("longpress"));
-        } else {
+            removeListeners();
+        }, threshold);
+
+        const cancel = () => {
+            clearTimeout(timeout);
             node.dispatchEvent(new CustomEvent("shortpress"));
-        }
-        dt = null;
+            removeListeners();
+        };
+
+        const removeListeners = () => {
+            node.removeEventListener("mousemove", cancel);
+            node.removeEventListener("mouseup", cancel);
+
+            node.removeEventListener("touchmove", cancel);
+            node.removeEventListener("touchend", cancel);
+        };
+
+        node.addEventListener("mousemove", cancel);
+        node.addEventListener("mouseup", cancel);
+
+        node.addEventListener("touchmove", cancel);
+        node.addEventListener("touchend", cancel);
     };
 
     node.addEventListener("mousedown", onMouseDown);
-    node.addEventListener("mouseup", onMouseUp);
-
     node.addEventListener("touchstart", onMouseDown);
-    node.addEventListener("touchend", onMouseUp);
 
     return {
         destroy() {
             node.removeEventListener("mousedown", onMouseDown);
-            node.removeEventListener("mouseup", onMouseUp);
-
             node.removeEventListener("touchstart", onMouseDown);
-            node.removeEventListener("touchend", onMouseUp);
         },
     };
 }

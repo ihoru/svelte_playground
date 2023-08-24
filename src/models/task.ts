@@ -1,4 +1,4 @@
-import { randomId } from "../lib/utils";
+import {randomId} from "../lib/utils";
 
 export default class Task {
     constructor(
@@ -12,6 +12,7 @@ export default class Task {
         public startTime: string | null = null,
         public finishTime: string | null = null,
         public done: boolean = false,
+        public postponed: boolean = false,
     ) {
     }
 
