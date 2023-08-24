@@ -196,10 +196,6 @@
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
         tasks = tasks;
-        if (!utils.isMobile()) {
-            await tick();
-            taskTitleRefs[tasksToAdd[0].id].focus();
-        }
     }
 
     function recalculateNumbers() {
