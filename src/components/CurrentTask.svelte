@@ -46,7 +46,7 @@
         >
             <Fa icon="{faXmark}"/>
         </button>
-        {#if task.todoistTaskId && !task.postponed}
+        {#if task.todoistTaskId && !task.done && !task.postponed}
             <button class="postpone"
                     use:longpress
                     on:shortpress="{() => actions.postponeTomorrow(task, index)}"
