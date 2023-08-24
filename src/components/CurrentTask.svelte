@@ -143,7 +143,7 @@
 
 <style>
     .task {
-        align-items: baseline;
+        align-items: center;
         display: grid;
         grid-template-columns:
             1.4rem
@@ -155,7 +155,8 @@
             2.5rem;
         font-family: monospace;
         width: 100%;
-        padding: 0.5rem 0;
+        height: 2rem;
+        line-height: 2rem;
     }
 
     .task.done,
@@ -222,8 +223,6 @@
     .additionalActions {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        transform: translateY(-0.3rem);
-        height: 0;
     }
 
     .additionalActions button {
