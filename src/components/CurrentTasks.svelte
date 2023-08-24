@@ -440,7 +440,7 @@
             const inputType = ref.classList.contains("title") ? "title" : "duration";
             let focusOn;
             let focusTask: Task | null;
-            if (event.key === "Delete" && (onlyAlt || noSpecial && !task.duration && !task.title)) {
+            if (event.key === "Delete" && onlyAlt) {
                 this.delete(task, index);
                 if (index == tasks.length) {
                     --index;
