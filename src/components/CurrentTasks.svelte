@@ -149,15 +149,6 @@
                 let title = task.content;
                 const todoistTaskId = task.id;
                 const todoistPriority = task.priority;
-                const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
-                if (existingTask) {
-                    if (existingTask.title !== title || existingTask.priority !== todoistPriority) {
-                        existingTask.title = title;
-                        existingTask.todoistPriority = todoistPriority;
-                        taskUpdated = true;
-                    }
-                    return;
-                }
                 if (
                     title.startsWith("*") ||
                     title.endsWith("~") ||
@@ -183,6 +174,16 @@
                         }
                         duration = parseInt(duration) * multiplier;
                     }
+                }
+                const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
+                if (existingTask) {
+                    if (existingTask.done || existingTask.title !== title || existingTask.priority !== todoistPriority) {
+                        existingTask.done = false;
+                        existingTask.title = title;
+                        existingTask.todoistPriority = todoistPriority;
+                        taskUpdated = true;
+                    }
+                    return;
                 }
                 return new Task(title, duration, todoistTaskId, todoistPriority);
             },
