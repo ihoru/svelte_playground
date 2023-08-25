@@ -326,7 +326,7 @@
 
         restore(task: Task, index: number) {
             task.postponed = false;
-            tasks = tasks;
+            tasksReorder(index);
             todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
                 if (!todoistTask) {
                     task.resetTodoist();
