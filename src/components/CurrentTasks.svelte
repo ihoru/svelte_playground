@@ -104,6 +104,12 @@
             if (taskA.done && !taskB.done) {
                 return -1;
             }
+            if (!taskA.postponed && taskB.postponed) {
+                return -1;
+            }
+            if (taskA.postponed && !taskB.postponed) {
+                return 1;
+            }
             return 0;
         });
         if (refs) {
