@@ -65,19 +65,15 @@
         >
             <Fa icon="{faBars}"/>
         </button>
-        {#if !task.postponed}
-            <button on:click="{() => actions.toggle(task, index)}"
-                    tabindex="-1"
-            >
-                {#if task.done}
-                    <Fa icon="{faCircleCheck}"/>
-                {:else}
-                    <Fa icon="{faCircle}"/>
-                {/if}
-            </button>
-        {:else}
-            <span></span>
-        {/if}
+        <button on:click="{() => actions.toggle(task, index)}"
+                tabindex="-1"
+        >
+            {#if task.done}
+                <Fa icon="{faCircleCheck}"/>
+            {:else}
+                <Fa icon="{faCircle}"/>
+            {/if}
+        </button>
     </div>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"

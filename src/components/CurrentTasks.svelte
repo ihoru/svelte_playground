@@ -262,15 +262,20 @@
                     task.startTime = null;
                     task.finishTime = utils.timeFormat();
                     if (task.todoistTaskId && !task.todoistCompleted) {
+                        task.postponed = false;
                         task.todoistCompleted = true;
                         todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                            if (
-                                todoistTask
-                                && !todoistTask.is_completed
-                                && todoistTask.due
-                                && todoistTask.due.date === utils.dateFormat()
-                            ) {
+                            if (!todoistTask || todoistTask.is_completed) {
+                                return;
+                            }
+                            const today = utils.dateFormat();
+                            const dueToday = todoistTask.due && todoistTask.due.date === today;
+                            if (dueToday) {
                                 todoistAPI.complete(task.todoistTaskId);
+                            } else if (task.postponed) {
+                                todoistAPI.postpone(task.todoistTaskId, today).then(() => {
+                                    todoistAPI.complete(task.todoistTaskId);
+                                });
                             }
                         }).catch(e => {
                             console.error("todoistAPI failed", e);
