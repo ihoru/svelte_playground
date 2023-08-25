@@ -9,6 +9,12 @@
     import * as utils from "../lib/utils";
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
+    import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
+    import Fa from "svelte-fa/src/fa.svelte";
+    import {faDownload} from "@fortawesome/free-solid-svg-icons/faDownload";
+    import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
+    import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
+    import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
@@ -131,8 +137,16 @@
         taskTitleRefs[task.id].focus();
     }
 
-    async function clearTasks() {
+    function clearAllTasks() {
         tasks = [];
+    }
+
+    function clearPostponedTasks() {
+        tasks = tasks.filter((task: Task) => !task.postponed);
+    }
+
+    function clearDoneTasks() {
+        tasks = tasks.filter((task: Task) => !task.done);
     }
 
     async function fetchTodoistTasks() {
@@ -641,12 +655,25 @@
 ></svelte:window>
 
 <div class="panel top">
-    <button on:click="{addTaskToTheEnd}" tabindex="-1">add</button>
-    <button on:click="{clearTasks}" tabindex="-1">clear</button>
+    <button on:click="{addTaskToTheEnd}" tabindex="-1">
+        <Fa icon="{faAdd}"/>
+    </button>
     <button disabled="{!todoistAPI || loading}" on:click="{fetchTodoistTasks}"
             tabindex="-1"
-    >fetch tasks from Todoist
+    >
+        <Fa icon="{faDownload}"/>
         {#if !todoistAPI}(empty access token){/if}
+    </button>
+    <button on:click="{clearPostponedTasks}" tabindex="-1">
+        <Fa icon="{faXmark}"/>
+        <Fa icon="{faClock}"/>
+    </button>
+    <button on:click="{clearDoneTasks}" tabindex="-1">
+        <Fa icon="{faXmark}"/>
+        <Fa icon="{faCircleCheck}"/>
+    </button>
+    <button on:click="{clearAllTasks}" tabindex="-1">
+        <Fa icon="{faXmark}"/>
     </button>
 </div>
 <div class="content">
