@@ -295,7 +295,7 @@
 
         postponeTomorrow(task: Task, index: number) {
             task.postponed = true;
-            tasks = tasks;
+            tasksReorder(index);
             todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
                 if (!todoistTask || todoistTask.is_completed) {
                     return;
@@ -312,7 +312,7 @@
 
         postponeSaturday(task: Task, index: number) {
             task.postponed = true;
-            tasks = tasks;
+            tasksReorder(index);
             todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
                 if (!todoistTask || todoistTask.is_completed) {
                     return;
