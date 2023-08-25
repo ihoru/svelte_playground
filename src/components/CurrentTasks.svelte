@@ -177,8 +177,14 @@
                 }
                 const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
                 if (existingTask) {
-                    if (existingTask.done || existingTask.title !== title || existingTask.priority !== todoistPriority) {
+                    if (
+                        existingTask.done
+                        || existingTask.postponed
+                        || existingTask.title !== title
+                        || existingTask.priority !== todoistPriority
+                    ) {
                         existingTask.done = false;
+                        existingTask.postponed = false;
                         existingTask.title = title;
                         existingTask.todoistPriority = todoistPriority;
                         taskUpdated = true;
