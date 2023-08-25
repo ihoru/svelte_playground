@@ -147,10 +147,10 @@
             6.5rem
             2rem
             0.8rem
-            minmax(15rem, auto)
+            minmax(10rem, auto)
             2.5rem;
         font-family: monospace;
-        width: 100vmax;
+        width: 100%;
         height: 1.7rem;
         line-height: 1.7rem;
     }
