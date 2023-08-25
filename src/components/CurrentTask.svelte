@@ -62,7 +62,7 @@
             >
                 <Fa icon="{faClockRotateLeft}"/>
             </button>
-        {:else if !task.todoistTaskId}
+        {:else if !task.todoistTaskId && !task.done}
             {#if task.title === ""}
                 <span></span>
             {:else}
@@ -72,7 +72,7 @@
                     <Fa icon="{faAdd}"/>
                 </button>
             {/if}
-        {:else if !task.done}
+        {:else if task.todoistTaskId && !task.done && !task.postponed}
             <button class="postpone"
                     use:longpress
                     on:shortpress="{() => actions.postponeTomorrow(task, index)}"
