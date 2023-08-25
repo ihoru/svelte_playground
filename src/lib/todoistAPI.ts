@@ -52,10 +52,16 @@ export class TodoistAPI {
         return this._fetch(`tasks/${taskId}/close`, {method: "POST"});
     }
 
-    async postpone(taskId: string, dueDate: string) {
-        const task = await this.getTask(taskId);
-        if (!task || !task.due || task.is_completed) {
-            return;
+    reopen(taskId: string): Promise<boolean> {
+        return this._fetch(`tasks/${taskId}/reopen`, {method: "POST"});
+    }
+
+    async postpone(taskId: string, dueDate: string, task: TodoistTask = null) {
+        if (!task) {
+            task = await this.getTask(taskId);
+            if (!task || !task.due || task.is_completed) {
+                return;
+            }
         }
         // get current data, to preserve "is_recurring" state and time
         const payload = {};

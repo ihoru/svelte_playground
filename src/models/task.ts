@@ -22,4 +22,10 @@ export default class Task {
         }
         return `https://todoist.com/showTask?id=${this.todoistTaskId}`;
     }
+
+    resetTodoist() {
+        this.todoistTaskId = "";
+        this.todoistPriority = 0;
+        this.todoistCompleted = false;
+    }
 }
