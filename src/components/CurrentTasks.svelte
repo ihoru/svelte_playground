@@ -132,7 +132,14 @@
     }
 
     async function addTaskToTheEnd() {
-        const task = taskActions.add(tasks.length);
+        let index = 0;
+        for (let i = tasks.length - 1; i >= 0; --i) {
+            if (!tasks[i].postponed) {
+                index = i;
+                break;
+            }
+        }
+        const task = taskActions.add(index + 1);
         await tick();
         taskTitleRefs[task.id].focus();
     }
@@ -440,10 +447,7 @@
             tasks = tasks;
         },
 
-        add(index: number = null) {
-            if (!index) {
-                tasks.length;
-            }
+        add(index: number) {
             const task = new Task();
             tasks.splice(index, 0, task);
             tasks = tasks;
