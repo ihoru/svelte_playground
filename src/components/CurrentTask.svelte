@@ -164,8 +164,16 @@
         opacity: .5;
     }
 
+    .task.postponed {
+        background-color: rgba(255, 255, 180, 30%);
+    }
+
+    .task.even.postponed {
+        background-color: rgba(255, 255, 180, 60%);
+    }
+
     .task.even {
-        background: #eeeeee;
+        background-color: #eeeeee;
     }
 
     .task.isDragging {
