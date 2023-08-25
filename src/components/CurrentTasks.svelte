@@ -278,45 +278,41 @@
     let activeDropZoneIndex: number;
     let draggingTaskId: string = null;
     const taskActions = {
-        toggle(task: Task, index: number) {
+        async toggle(task: Task, index: number) {
             task.done = !task.done;
-            if (task.done) {
-                if (!task.duration && !task.title) {
-                    // delete empty task
-                    tasks.splice(index, 1);
-                } else {
-                    task.startTime = null;
-                    task.finishTime = utils.timeFormat();
-                    if (task.todoistTaskId && !task.todoistCompleted) {
-                        task.postponed = false;
-                        task.todoistCompleted = true;
-                        todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                            if (!todoistTask) {
-                                task.resetTodoist();
-                                tasks = tasks;
-                                return;
-                            }
-                            if (todoistTask.is_completed) {
-                                return;
-                            }
-                            const today = utils.dateFormat();
-                            const dueToday = todoistTask.due && todoistTask.due.date === today;
-                            if (dueToday) {
-                                todoistAPI.complete(task.todoistTaskId);
-                            } else if (task.postponed) {
-                                todoistAPI.postpone(task.todoistTaskId, today, task = todoistTask).then(() => {
-                                    todoistAPI.complete(task.todoistTaskId);
-                                });
-                            }
-                        }).catch(e => {
-                            console.error("todoistAPI failed", e);
-                        });
-                    }
-                }
-            } else {
-
+            await tasksReorder(index);
+            if (!task.done) {
+                return;
             }
-            tasksReorder(index);
+            if (!task.duration && !task.title) {
+                // delete empty task
+                tasks.splice(index, 1);
+                return;
+            }
+            task.startTime = null;
+            task.finishTime = utils.timeFormat();
+            if (!task.todoistTaskId || task.todoistCompleted) {
+                return;
+            }
+            task.postponed = false;
+            task.todoistCompleted = true;
+            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+            if (!todoistTask) {
+                task.resetTodoist();
+                tasks = tasks;
+                return;
+            }
+            if (todoistTask.is_completed) {
+                return;
+            }
+            const today = utils.dateFormat();
+            const dueToday = todoistTask.due && todoistTask.due.date === today;
+            if (dueToday) {
+                await todoistAPI.complete(task.todoistTaskId);
+            } else if (task.postponed) {
+                await todoistAPI.postpone(task.todoistTaskId, today, todoistTask);
+                await todoistAPI.complete(task.todoistTaskId);
+            }
         },
 
         delete(task: Task, index: number) {
@@ -324,23 +320,20 @@
             tasks = tasks;
         },
 
-        restore(task: Task, index: number) {
+        async restore(task: Task, index: number) {
             task.postponed = false;
-            tasksReorder(index);
-            todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                if (!todoistTask) {
-                    task.resetTodoist();
-                    tasks = tasks;
-                    return;
-                }
-                if (todoistTask.is_completed) {
-                    todoistAPI.reopen(task.todoistTaskId);
-                }
-                const dueDate = utils.dateFormat();
-                todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
-            }).catch(e => {
-                console.error("todoistAPI failed", e);
-            });
+            await tasksReorder(index);
+            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+            if (!todoistTask) {
+                task.resetTodoist();
+                tasks = tasks;
+                return;
+            }
+            if (todoistTask.is_completed) {
+                await todoistAPI.reopen(task.todoistTaskId);
+            }
+            const dueDate = utils.dateFormat();
+            await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
         },
 
         create(task: Task, index: number) {
@@ -349,49 +342,43 @@
             tasks = tasks;
         },
 
-        postponeTomorrow(task: Task, index: number) {
+        async postponeTomorrow(task: Task, index: number) {
             task.postponed = true;
-            tasksReorder(index);
-            todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                if (!todoistTask) {
-                    task.resetTodoist();
-                    tasks = tasks;
-                    return;
-                }
-                if (todoistTask.is_completed) {
-                    return;
-                }
-                if (todoistTask.due && todoistTask.due.date === utils.dateFormat()) {
-                    const dt = addDays(new Date(), 1);
-                    const dueDate = utils.dateFormat(dt);
-                    todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
-                }
-            }).catch(e => {
-                console.error("todoistAPI failed", e);
-            });
+            await tasksReorder(index);
+            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+            if (!todoistTask) {
+                task.resetTodoist();
+                tasks = tasks;
+                return;
+            }
+            if (todoistTask.is_completed) {
+                return;
+            }
+            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat()) {
+                const dt = addDays(new Date(), 1);
+                const dueDate = utils.dateFormat(dt);
+                await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
+            }
         },
 
-        postponeSaturday(task: Task, index: number) {
+        async postponeSaturday(task: Task, index: number) {
             task.postponed = true;
-            tasksReorder(index);
-            todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
-                if (!todoistTask) {
-                    task.resetTodoist();
-                    tasks = tasks;
-                    return;
-                }
-                if (todoistTask.is_completed) {
-                    return;
-                }
-                if (todoistTask.due && todoistTask.due.date === utils.dateFormat()) {
-                    let dt = new Date();
-                    dt = addDays(dt, 6 - dt.getDay());
-                    const dueDate = utils.dateFormat(dt);
-                    todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
-                }
-            }).catch(e => {
-                console.error("todoistAPI failed", e);
-            });
+            await tasksReorder(index);
+            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+            if (!todoistTask) {
+                task.resetTodoist();
+                tasks = tasks;
+                return;
+            }
+            if (todoistTask.is_completed) {
+                return;
+            }
+            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat()) {
+                let dt = new Date();
+                dt = addDays(dt, 6 - dt.getDay());
+                const dueDate = utils.dateFormat(dt);
+                await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
+            }
         },
 
         moveUp(task: Task, index: number, size = 1) {
@@ -559,7 +546,7 @@
             } else if (onlyAlt && event.key === "PageDown" && tasks.length) {
                 focusTask = tasks[tasks.length - 1];
             } else if (onlyAlt && event.key === "Enter") {
-                this.toggle(task, index);
+                this.toggle(task, index).then();
             } else if (onlyShift && event.key === "Enter") {
                 focusTask = this.add(index);
             } else {
