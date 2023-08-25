@@ -209,6 +209,7 @@
                         existingTask.postponed = false;
                         existingTask.title = title;
                         existingTask.todoistPriority = todoistPriority;
+                        existingTask.todoistCompleted = false;
                         taskUpdated = true;
                     }
                     return;
@@ -220,18 +221,14 @@
             if (!task.todoistTaskId) {
                 return;
             }
-            const justImported = taskIds.includes(task.todoistTaskId);
-            if (task.postponed && justImported) {
-                task.postponed = false;
-                taskUpdated = true;
-            } else if (!task.postponed && !task.done && !justImported) {
+            if (!task.postponed && !task.done && !taskIds.includes(task.todoistTaskId)) {
                 task.postponed = true;
                 taskUpdated = true;
             }
         });
         if (!tasksToAdd.length) {
             if (taskUpdated) {
-                tasks = tasks;
+                await tasksReorder();
             }
             alert("No tasks found in Todoist");
             return;
@@ -305,15 +302,16 @@
             }
             task.startTime = null;
             task.finishTime = utils.timeFormat();
+            task.postponed = false;
+            tasks = tasks;
             if (!task.todoistTaskId || task.todoistCompleted) {
                 return;
             }
-            task.postponed = false;
             task.todoistCompleted = true;
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();
-                tasks = tasks;
+                await tasksReorder(index);
                 return;
             }
             if (todoistTask.is_completed) {
@@ -673,6 +671,7 @@
             tabindex="-1"
     >
         <Fa icon="{faDownload}"/>
+        Todoist
         {#if !todoistAPI}(empty access token){/if}
     </button>
 </div>

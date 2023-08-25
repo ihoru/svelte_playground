@@ -1,5 +1,7 @@
 export function longpress(node: Node, threshold: number = 300) {
-    const onMouseDown = () => {
+    const onMouseDown = (event) => {
+        event.preventDefault();
+
         const timeout = setTimeout(() => {
             node.dispatchEvent(new CustomEvent("longpress"));
             removeListeners();
