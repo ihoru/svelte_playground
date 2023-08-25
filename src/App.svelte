@@ -104,7 +104,7 @@
 <main>
     {#if storageError}
         <div class="error">
-            Storage API returned an error: <br/>
+            Storage API returned an error:
             <b>{storageError}</b>
         </div>
     {/if}
@@ -119,6 +119,6 @@
 <style>
     .error {
         text-align: center;
-        margin-bottom: 1rem;
+        margin: 0.5rem 0;
     }
 </style>

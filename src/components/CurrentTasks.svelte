@@ -670,6 +670,10 @@
         text-align: center;
     }
 
+    .current {
+        width: 100%;
+    }
+
     .dropZoneHolder {
         position: relative;
     }

@@ -35,7 +35,7 @@
     <div class="number">{task.number || ''}</div>
     <div class="time">
         {#if task.startTime && task.finishTime}
-            {task.startTime} &mdash; {task.finishTime}
+            {task.startTime}-{task.finishTime}
         {:else if task.finishTime}
             {task.finishTime}
         {/if}
@@ -45,6 +45,14 @@
                 tabindex="-1"
         >
             <Fa icon="{faXmark}"/>
+        </button>
+        <button class="dragHandle"
+                on:mousedown="{actions.dragHandleDown}"
+                on:mouseup="{actions.dragHandleUp}"
+                on:touchend|passive="{actions.dragHandleUp}"
+                on:touchstart|passive="{actions.dragHandleDown}"
+        >
+            <Fa icon="{faBars}"/>
         </button>
         {#if task.todoistTaskId && !task.done && !task.postponed}
             <button class="postpone"
@@ -57,14 +65,6 @@
         {:else}
             <span></span>
         {/if}
-        <button class="dragHandle"
-                on:mousedown="{actions.dragHandleDown}"
-                on:mouseup="{actions.dragHandleUp}"
-                on:touchend|passive="{actions.dragHandleUp}"
-                on:touchstart|passive="{actions.dragHandleDown}"
-        >
-            <Fa icon="{faBars}"/>
-        </button>
         <button on:click="{() => actions.toggle(task, index)}"
                 tabindex="-1"
         >
@@ -143,16 +143,16 @@
         display: grid;
         grid-template-columns:
             1.4rem
-            7.5rem
+            6.2rem
             6.5rem
             2rem
             0.8rem
-            minmax(12rem, auto)
+            minmax(15rem, auto)
             2.5rem;
         font-family: monospace;
-        width: 100%;
-        height: 2rem;
-        line-height: 2rem;
+        width: 100vmax;
+        height: 1.7rem;
+        line-height: 1.7rem;
     }
 
     .task.done,
@@ -226,7 +226,9 @@
 
     .additionalActions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1rem 0.8rem;
+        grid-template-rows: 0.4rem 0.7rem;
+        margin-left: 0.5rem;
     }
 
     .additionalActions button {

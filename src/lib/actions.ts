@@ -22,12 +22,12 @@ export function longpress(node: Node, threshold: number = 300) {
         node.addEventListener("mousemove", cancel);
         node.addEventListener("mouseup", cancel);
 
-        node.addEventListener("touchmove", cancel);
-        node.addEventListener("touchend", cancel);
+        node.addEventListener("touchmove", cancel, {passive: false});
+        node.addEventListener("touchend", cancel, {passive: false});
     };
 
     node.addEventListener("mousedown", onMouseDown);
-    node.addEventListener("touchstart", onMouseDown);
+    node.addEventListener("touchstart", onMouseDown, {passive: false});
 
     return {
         destroy() {
