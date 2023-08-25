@@ -291,18 +291,36 @@
         postponeTomorrow(task: Task, index: number) {
             task.postponed = true;
             tasks = tasks;
-            const dt = addDays(new Date(), 1);
-            const dueDate = utils.dateFormat(dt);
-            todoistAPI.postpone(task.todoistTaskId, dueDate);
+            todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
+                if (!todoistTask || todoistTask.is_completed) {
+                    return;
+                }
+                if (todoistTask.due && todoistTask.due.date === utils.dateFormat()) {
+                    const dt = addDays(new Date(), 1);
+                    const dueDate = utils.dateFormat(dt);
+                    todoistAPI.postpone(task.todoistTaskId, dueDate);
+                }
+            }).catch(e => {
+                console.error("todoistAPI failed", e);
+            });
         },
 
         postponeSaturday(task: Task, index: number) {
             task.postponed = true;
             tasks = tasks;
-            let dt = new Date();
-            dt = addDays(dt, 6 - dt.getDay());
-            const dueDate = utils.dateFormat(dt);
-            todoistAPI.postpone(task.todoistTaskId, dueDate);
+            todoistAPI.getTask(task.todoistTaskId).then((todoistTask: TodoistTask) => {
+                if (!todoistTask || todoistTask.is_completed) {
+                    return;
+                }
+                if (todoistTask.due && todoistTask.due.date === utils.dateFormat()) {
+                    let dt = new Date();
+                    dt = addDays(dt, 6 - dt.getDay());
+                    const dueDate = utils.dateFormat(dt);
+                    todoistAPI.postpone(task.todoistTaskId, dueDate);
+                }
+            }).catch(e => {
+                console.error("todoistAPI failed", e);
+            });
         },
 
         moveUp(task: Task, index: number, size = 1) {
