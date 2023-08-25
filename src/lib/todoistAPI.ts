@@ -48,6 +48,14 @@ export class TodoistAPI {
         return this._fetch<TodoistTask>(`tasks/${taskId}`);
     }
 
+    create(content: string, dueDate: string) {
+        const payload = {
+            content: content,
+            due_date: dueDate,
+        };
+        return this._fetch<TodoistTask>(`tasks`, {body: payload});
+    }
+
     complete(taskId: string): Promise<boolean> {
         return this._fetch(`tasks/${taskId}/close`, {method: "POST"});
     }

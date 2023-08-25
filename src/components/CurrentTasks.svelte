@@ -264,6 +264,17 @@
         event.stopPropagation();
     }
 
+    async function createTodoistTask(task: Task, dueDate: string) {
+        let title = task.title;
+        if (task.duration) {
+            title += ` ${task.duration}m`;
+        }
+        const todoistTask = await todoistAPI.create(title, dueDate);
+        task.todoistTaskId = todoistTask.id;
+        task.todoistPriority = todoistTask.priority;
+        tasks = tasks;
+    }
+
     let activeDropZoneIndex: number;
     let draggingTaskId: string = null;
     const taskActions = {
@@ -330,6 +341,12 @@
             }).catch(e => {
                 console.error("todoistAPI failed", e);
             });
+        },
+
+        create(task: Task, index: number) {
+            const dueDate = utils.dateFormat();
+            createTodoistTask(task, dueDate);
+            tasks = tasks;
         },
 
         postponeTomorrow(task: Task, index: number) {

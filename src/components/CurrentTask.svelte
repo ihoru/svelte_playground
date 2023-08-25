@@ -13,6 +13,7 @@
     import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
     import {faGripLinesVertical} from "@fortawesome/free-solid-svg-icons/faGripLinesVertical";
     import {faClockRotateLeft} from "@fortawesome/free-solid-svg-icons/faClockRotateLeft";
+    import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
 
     export let task: Task;
     export let index: number;
@@ -61,7 +62,17 @@
             >
                 <Fa icon="{faClockRotateLeft}"/>
             </button>
-        {:else if task.todoistTaskId && !task.done}
+        {:else if !task.todoistTaskId}
+            {#if task.title === ""}
+                <span></span>
+            {:else}
+                <button class="create"
+                        on:click="{() => actions.create(task, index)}"
+                >
+                    <Fa icon="{faAdd}"/>
+                </button>
+            {/if}
+        {:else if !task.done}
             <button class="postpone"
                     use:longpress
                     on:shortpress="{() => actions.postponeTomorrow(task, index)}"
