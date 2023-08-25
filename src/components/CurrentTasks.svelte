@@ -442,8 +442,17 @@
             if (index + 1 === tasks.length) {
                 return;
             }
+            let newIndex = tasks.length;
+            if (!tasks[index + 1].postponed) {
+                for (let i = index + 1; i < tasks.length; i++) {
+                    if (tasks[i].postponed) {
+                        newIndex = i - 1;
+                        break;
+                    }
+                }
+            }
             tasks.splice(index, 1);
-            tasks.push(task);
+            tasks.splice(newIndex, 0, task);
             tasks = tasks;
         },
 
