@@ -86,10 +86,10 @@
         }
     }
 
-    async function tasksReorder(index: number) {
+    async function tasksReorder(index: number = null) {
         const focusedAt = document.activeElement;
         let refs;
-        if (focusedAt.tagName === "INPUT") {
+        if (focusedAt.tagName === "INPUT" && index !== null) {
             const classList = focusedAt.classList;
             if (classList.contains("duration")) {
                 refs = taskDurationRefs;
@@ -150,6 +150,7 @@
         console.log("todoistTasks", todoistTasks);
         let taskUpdated = false;
         const searchDuration = /( \d{1,2}[mh])$/i;
+        const taskIds = [];
         const tasksToAdd = todoistTasks.map(
             (task: TodoistTask) => {
                 let title = task.content;
@@ -162,6 +163,7 @@
                 ) {
                     return;
                 }
+                taskIds.push(todoistTaskId);
                 let duration;
                 if (task.duration) {
                     duration = task.duration.amount;
@@ -200,6 +202,19 @@
                 return new Task(title, duration, todoistTaskId, todoistPriority);
             },
         ).filter(Boolean);
+        tasks.forEach((task: Task) => {
+            if (!task.todoistTaskId) {
+                return;
+            }
+            const justImported = taskIds.includes(task.todoistTaskId);
+            if (task.postponed && justImported) {
+                task.postponed = false;
+                taskUpdated = true;
+            } else if (!task.postponed && !task.done && !justImported) {
+                task.postponed = true;
+                taskUpdated = true;
+            }
+        });
         if (!tasksToAdd.length) {
             if (taskUpdated) {
                 tasks = tasks;
@@ -208,7 +223,7 @@
             return;
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
-        tasks = tasks;
+        await tasksReorder();
     }
 
     function recalculateNumbers() {
