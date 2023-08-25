@@ -658,12 +658,6 @@
     <button on:click="{addTaskToTheEnd}" tabindex="-1">
         <Fa icon="{faAdd}"/>
     </button>
-    <button disabled="{!todoistAPI || loading}" on:click="{fetchTodoistTasks}"
-            tabindex="-1"
-    >
-        <Fa icon="{faDownload}"/>
-        {#if !todoistAPI}(empty access token){/if}
-    </button>
     <button on:click="{clearPostponedTasks}" tabindex="-1">
         <Fa icon="{faXmark}"/>
         <Fa icon="{faClock}"/>
@@ -674,6 +668,12 @@
     </button>
     <button on:click="{clearAllTasks}" tabindex="-1">
         <Fa icon="{faXmark}"/>
+    </button>
+    <button disabled="{!todoistAPI || loading}" on:click="{fetchTodoistTasks}"
+            tabindex="-1"
+    >
+        <Fa icon="{faDownload}"/>
+        {#if !todoistAPI}(empty access token){/if}
     </button>
 </div>
 <div class="content">
