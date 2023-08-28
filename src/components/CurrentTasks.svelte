@@ -1,20 +1,22 @@
 <script lang="ts">
-    import Task from "../models/task";
+    import * as utils from "../lib/utils";
     import CurrentTask from "./CurrentTask.svelte";
-    import {tick} from "svelte";
+    import Fa from "svelte-fa/src/fa.svelte";
+    import Task from "../models/task";
     import addDays from "date-fns/addDays";
     import addMinutes from "date-fns/addMinutes";
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
-    import * as utils from "../lib/utils";
-    import {flip} from "svelte/animate";
-    import {md5} from "pure-md5";
-    import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
-    import Fa from "svelte-fa/src/fa.svelte";
-    import {faDownload} from "@fortawesome/free-solid-svg-icons/faDownload";
     import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
-    import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
     import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
+    import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
+    import {faDownload} from "@fortawesome/free-solid-svg-icons/faDownload";
+    import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
+    import {flip} from "svelte/animate";
+    import isPast from "date-fns/isPast";
+    import parseISO from "date-fns/parseISO";
+    import {md5} from "pure-md5";
+    import {tick} from "svelte";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
@@ -331,8 +333,8 @@
                 return;
             }
             const today = utils.dateFormat();
-            const dueToday = todoistTask.due && todoistTask.due.date === today;
-            if (dueToday) {
+            const isDue = todoistTask.due && (todoistTask.due.date === today || isPast(parseISO(todoistTask.due.date)));
+            if (isDue) {
                 await todoistAPI.complete(task.todoistTaskId);
             } else if (task.postponed) {
                 await todoistAPI.postpone(task.todoistTaskId, today, todoistTask);
@@ -379,7 +381,7 @@
             if (todoistTask.is_completed) {
                 return;
             }
-            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat()) {
+            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
                 const dt = addDays(new Date(), 1);
                 const dueDate = utils.dateFormat(dt);
                 await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
@@ -398,7 +400,7 @@
             if (todoistTask.is_completed) {
                 return;
             }
-            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat()) {
+            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
                 let dt = new Date();
                 dt = addDays(dt, 6 - dt.getDay());
                 const dueDate = utils.dateFormat(dt);
