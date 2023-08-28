@@ -206,15 +206,21 @@
                 }
                 const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
                 if (existingTask) {
+                    const durationChanged = !existingTask.duration && duration && existingTask.duration !== duration;
                     if (
                         existingTask.done
                         || existingTask.postponed
+                        || existingTask.todoistCompleted
                         || existingTask.title !== title
-                        || existingTask.priority !== todoistPriority
+                        || durationChanged
+                        || existingTask.todoistPriority !== todoistPriority
                     ) {
                         existingTask.done = false;
                         existingTask.postponed = false;
                         existingTask.title = title;
+                        if (durationChanged) {
+                            existingTask.duration = duration;
+                        }
                         existingTask.todoistPriority = todoistPriority;
                         existingTask.todoistCompleted = false;
                         taskUpdated = true;
