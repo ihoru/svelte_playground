@@ -303,6 +303,8 @@
 
     let activeDropZoneIndex: number;
     let draggingTaskId: string = null;
+    let lastMoveTopAt: Date;
+    let lastMoveTopIndex: number;
     const taskActions = {
         async toggle(task: Task, index: number) {
             task.done = !task.done;
@@ -441,14 +443,25 @@
                 return;
             }
             let newIndex = 0;
-            if (!tasks[index - 1].done) {
-                for (let i = index - 1; i >= 0; i--) {
-                    if (tasks[i].done) {
-                        newIndex = i + 1;
-                        break;
+            const now = new Date();
+            if (lastMoveTopAt && now - lastMoveTopAt > 60 * 1000) {
+                // if tasks were moved to the top fast enough they are placed one after each other, instead of in front
+                lastMoveTopAt = null;
+            }
+            if (lastMoveTopAt) {
+                newIndex = ++lastMoveTopIndex;
+            } else {
+                if (!tasks[index - 1].done) {
+                    for (let i = index - 1; i >= 0; i--) {
+                        if (tasks[i].done) {
+                            newIndex = i + 1;
+                            break;
+                        }
                     }
                 }
+                lastMoveTopIndex = newIndex;
             }
+            lastMoveTopAt = now;
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
