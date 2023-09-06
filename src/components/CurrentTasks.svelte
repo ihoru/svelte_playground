@@ -677,16 +677,16 @@
     <button on:click="{addTaskToTheEnd}" tabindex="-1">
         <Fa icon="{faAdd}"/>
     </button>
-    <button on:click="{clearPostponedTasks}" tabindex="-1">
+    <button on:click="{clearAllTasks}" tabindex="-1">
         <Fa icon="{faXmark}"/>
-        <Fa icon="{faClock}"/>
     </button>
     <button on:click="{clearDoneTasks}" tabindex="-1">
         <Fa icon="{faXmark}"/>
         <Fa icon="{faCircleCheck}"/>
     </button>
-    <button on:click="{clearAllTasks}" tabindex="-1">
+    <button on:click="{clearPostponedTasks}" tabindex="-1">
         <Fa icon="{faXmark}"/>
+        <Fa icon="{faClock}"/>
     </button>
     <button disabled="{!todoistAPI || loading}" on:click="{fetchTodoistTasks}"
             tabindex="-1"
