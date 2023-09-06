@@ -8,7 +8,7 @@
 
 body {
     font-size: 15px;
-    padding: 0;
+    padding: 0.5rem;
 }
 
 .hidden {
@@ -17,12 +17,19 @@ body {
 
 #app {
     --text-color: #333;
+    --disabled-text-color: #666;
 
     color: var(--text-color);
 }
+
 #app input,
 #app button {
     color: var(--text-color);
+}
+
+#app input:disabled,
+#app button:disabled {
+    color: var(--disabled-text-color);
 }
 
 input, button, select, textarea {

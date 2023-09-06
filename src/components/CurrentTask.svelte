@@ -129,17 +129,17 @@
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">
-        <button class="up"
-                on:click="{() => actions.moveUp(task, index)}"
-                tabindex="-1"
-        >
-            <Fa icon="{faChevronUp}"/>
-        </button>
         <button class="top"
                 on:click="{() => actions.moveTop(task, index)}"
                 tabindex="-1"
         >
             <Fa icon="{faUpLong}"/>
+        </button>
+        <button class="bottom"
+                on:click="{() => actions.moveBottom(task, index)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faDownLong}"/>
         </button>
         <button class="up"
                 on:click="{() => actions.moveDown(task, index)}"
@@ -147,11 +147,11 @@
         >
             <Fa icon="{faChevronDown}"/>
         </button>
-        <button class="bottom"
-                on:click="{() => actions.moveBottom(task, index)}"
+        <button class="up"
+                on:click="{() => actions.moveUp(task, index)}"
                 tabindex="-1"
         >
-            <Fa icon="{faDownLong}"/>
+            <Fa icon="{faChevronUp}"/>
         </button>
     </div>
 </div>
@@ -166,8 +166,8 @@
             6.5rem
             2rem
             0.8rem
-            minmax(10rem, auto)
-            2.5rem;
+            minmax(6rem, auto)
+            6.5rem;
         font-family: monospace;
         width: 100%;
         height: 1.7rem;
@@ -245,13 +245,7 @@
 
     .additionalActions {
         display: grid;
-        grid-template-columns: 1rem 0.8rem;
-        grid-template-rows: 0.4rem 0.7rem;
-        margin-left: 0.5rem;
-    }
-
-    .additionalActions button {
-        font-size: 0.8rem;
+        grid-template-columns: repeat(4, 1fr);
     }
 
     .priority {
