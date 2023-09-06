@@ -161,7 +161,7 @@
         align-items: center;
         display: grid;
         grid-template-columns:
-            1.4rem
+            /*1.4rem*/
             6.2rem
             6.5rem
             2rem
@@ -201,6 +201,7 @@
     }
 
     .number {
+        display: none;
         font-size: 0.9rem;
         color: grey;
         background-color: white;
