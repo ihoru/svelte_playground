@@ -688,13 +688,14 @@
         <Fa icon="{faXmark}"/>
         <Fa icon="{faClock}"/>
     </button>
-    <button disabled="{!todoistAPI || loading}" on:click="{fetchTodoistTasks}"
-            tabindex="-1"
-    >
-        <Fa icon="{faDownload}"/>
-        Todoist
-        {#if !todoistAPI}(empty access token){/if}
-    </button>
+    {#if todoistAPI}
+        <button disabled="{loading}" on:click="{fetchTodoistTasks}"
+                tabindex="-1"
+        >
+            <Fa icon="{faDownload}"/>
+            Todoist
+        </button>
+    {/if}
 </div>
 <div class="content">
     {#if tasks.length}
