@@ -18,20 +18,29 @@ export function longpress(node: Node, threshold: number = 300) {
         }
         dt = null;
     };
+    const onMouseMove = (event: MouseEvent) => {
+        if (dt) {
+            dt = null;
+        }
+    };
 
     node.addEventListener("mousedown", onMouseDown);
     node.addEventListener("mouseup", onMouseUp);
+    node.addEventListener("mousemove", onMouseMove);
 
     node.addEventListener("touchstart", onMouseDown, {passive: false});
     node.addEventListener("touchend", onMouseUp, {passive: false});
+    node.addEventListener("touchmove", onMouseMove, {passive: false});
 
     return {
         destroy() {
             node.removeEventListener("mousedown", onMouseDown);
             node.removeEventListener("mouseup", onMouseUp);
+            node.removeEventListener("mousemove", onMouseMove);
 
             node.removeEventListener("touchstart", onMouseDown);
             node.removeEventListener("touchend", onMouseUp);
+            node.removeEventListener("touchmove", onMouseMove);
         },
     };
 }
