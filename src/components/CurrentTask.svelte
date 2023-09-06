@@ -125,6 +125,7 @@
            on:keydown="{(event) => actions.inputKeyDown(task, index, event, refTitle)}"
            on:keyup="{(event) => actions.inputKeyUp(task, index, event, refTitle)}"
            on:paste="{(event) => actions.paste(task, index, event)}"
+           on:blur="{(event) => actions.inputBlur(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">

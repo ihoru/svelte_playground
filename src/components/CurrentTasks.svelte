@@ -599,6 +599,10 @@
             }
         },
 
+        async inputBlur(task: Task, index: number, event: KeyboardEvent) {
+            event.target.value = task.title = task.title.trim();
+        },
+
         dragHandleDown(event) {
             event.target.closest(".task").setAttribute("draggable", "true");
         },
