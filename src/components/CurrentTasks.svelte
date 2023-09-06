@@ -95,6 +95,7 @@
     }
 
     async function tasksReorder(index: number = null) {
+        resetLastMoveTopMemory();
         const focusedAt = document.activeElement;
         let refs;
         if (focusedAt.tagName === "INPUT" && index !== null) {
@@ -305,8 +306,14 @@
     let draggingTaskId: string = null;
     let lastMoveTopAt: Date;
     let lastMoveTopIndex: number;
+
+    function resetLastMoveTopMemory() {
+        lastMoveTopAt = lastMoveTopIndex = null;
+    }
+
     const taskActions = {
         async toggle(task: Task, index: number) {
+            resetLastMoveTopMemory();
             task.done = !task.done;
             await tasksReorder(index);
             if (!task.done) {
@@ -444,7 +451,7 @@
             }
             let newIndex = 0;
             const now = new Date();
-            if (lastMoveTopAt && now - lastMoveTopAt > 60 * 1000) {
+            if (lastMoveTopAt && now - lastMoveTopAt > 30 * 1000) {
                 // if tasks were moved to the top fast enough they are placed one after each other, instead of in front
                 lastMoveTopAt = null;
             }
@@ -646,15 +653,16 @@
         },
 
         dragDrop(event) {
+            resetLastMoveTopMemory();
             let newIndex = parseInt(event.target.dataset.index);
-            console.debug("drop", event, newIndex);
+            // console.debug("drop", event, newIndex);
             const dragTaskId = event.dataTransfer.getData("application/my-app");
             const oldIndex = tasks.findIndex((task: Task) => task.id === dragTaskId);
             const dragTask = tasks[oldIndex];
             if (oldIndex < newIndex) {
                 --newIndex;
             }
-            console.debug({dragTask, oldIndex, newIndex});
+            // console.debug({dragTask, oldIndex, newIndex});
             tasks.splice(oldIndex, 1);
             tasks.splice(newIndex, 0, dragTask);
             tasks = tasks;
