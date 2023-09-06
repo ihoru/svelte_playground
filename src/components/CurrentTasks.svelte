@@ -759,10 +759,12 @@
         <div class="empty">No tasks yet</div>
     {/if}
 </div>
-<div class="panel bottom">
-    <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
-    <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
-</div>
+{#if false}
+    <div class="panel bottom">
+        <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
+        <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
+    </div>
+{/if}
 
 <style>
     .panel {
