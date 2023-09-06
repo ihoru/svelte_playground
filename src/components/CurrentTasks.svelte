@@ -369,9 +369,13 @@
             tasks = tasks;
         },
 
-        async postponeTomorrow(task: Task, index: number) {
+        async postponeTomorrow(task: Task) {
             task.postponed = true;
-            await tasksReorder(index);
+            const focusedAt = document.activeElement;
+            if (focusedAt && focusedAt.tagName === "INPUT") {
+                focusedAt.blur();
+            }
+            await tasksReorder();
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();
@@ -388,9 +392,13 @@
             }
         },
 
-        async postponeSaturday(task: Task, index: number) {
+        async postponeSaturday(task: Task) {
             task.postponed = true;
-            await tasksReorder(index);
+            const focusedAt = document.activeElement;
+            if (focusedAt && focusedAt.tagName === "INPUT") {
+                focusedAt.blur();
+            }
+            await tasksReorder();
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();

@@ -75,8 +75,8 @@
         {:else if task.todoistTaskId && !task.done && !task.postponed}
             <button class="postpone"
                     use:longpress
-                    on:shortpress="{() => actions.postponeTomorrow(task, index)}"
-                    on:longpress="{() => actions.postponeSaturday(task, index)}"
+                    on:shortpress="{() => actions.postponeTomorrow(task)}"
+                    on:longpress="{() => actions.postponeSaturday(task)}"
             >
                 <Fa icon="{faClock}"/>
             </button>
