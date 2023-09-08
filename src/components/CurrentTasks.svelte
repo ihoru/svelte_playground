@@ -5,16 +5,17 @@
     import Task from "../models/task";
     import addDays from "date-fns/addDays";
     import addMinutes from "date-fns/addMinutes";
+    import isPast from "date-fns/isPast";
+    import parseISO from "date-fns/parseISO";
     import type {TodoistTask} from "../lib/todoistAPI";
     import {TodoistAPI} from "../lib/todoistAPI";
     import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
     import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
     import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
     import {faDownload} from "@fortawesome/free-solid-svg-icons/faDownload";
+    import {faNotEqual} from "@fortawesome/free-solid-svg-icons/faNotEqual";
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
     import {flip} from "svelte/animate";
-    import isPast from "date-fns/isPast";
-    import parseISO from "date-fns/parseISO";
     import {md5} from "pure-md5";
     import {tick} from "svelte";
 
@@ -157,6 +158,10 @@
 
     function clearDoneTasks() {
         tasks = tasks.filter((task: Task) => !task.done);
+    }
+
+    function clearExternalTasks() {
+        tasks = tasks.filter((task: Task) => !task.todoistTaskId);
     }
 
     async function fetchTodoistTasks() {
@@ -720,6 +725,11 @@
     <button on:click="{clearPostponedTasks}" tabindex="-1">
         <Fa icon="{faXmark}"/>
         <Fa icon="{faClock}"/>
+    </button>
+    <button on:click="{clearExternalTasks}" tabindex="-1">
+        <Fa icon="{faXmark}"/>
+        <Fa icon="{faNotEqual}"/>
+        <Fa icon="{faAdd}"/>
     </button>
     {#if todoistAPI}
         <button disabled="{loading}" on:click="{fetchTodoistTasks}"
