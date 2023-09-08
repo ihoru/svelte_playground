@@ -83,15 +83,19 @@
         {:else}
             <span></span>
         {/if}
-        <button on:click="{() => actions.toggle(task, index)}"
-                tabindex="-1"
-        >
-            {#if task.done}
-                <Fa icon="{faCircleCheck}"/>
-            {:else}
-                <Fa icon="{faCircle}"/>
-            {/if}
-        </button>
+        {#if task.title !== ""}
+            <button on:click="{() => actions.toggle(task, index)}"
+                    tabindex="-1"
+            >
+                {#if task.done}
+                    <Fa icon="{faCircleCheck}"/>
+                {:else}
+                    <Fa icon="{faCircle}"/>
+                {/if}
+            </button>
+        {:else}
+            <span></span>
+        {/if}
     </div>
     <input bind:this="{refDuration}"
            bind:value="{task.duration}"
@@ -161,8 +165,7 @@
         align-items: center;
         display: grid;
         grid-template-columns:
-            /*1.4rem*/
-            6.2rem
+            /*1.4rem*/ 6.2rem
             6.5rem
             2rem
             0.8rem
