@@ -424,7 +424,12 @@
             }
             if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
                 let dt = new Date();
-                dt = addDays(dt, 6 - dt.getDay());
+                let diffDays = 6 - dt.getDay();
+                if (diffDays === 1) {
+                    // if tomorrow is Saturday, then postpone task to the next Saturday
+                    diffDays = 8;
+                }
+                dt = addDays(dt, diffDays);
                 const dueDate = utils.dateFormat(dt);
                 await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
             }
