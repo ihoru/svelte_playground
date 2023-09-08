@@ -1,6 +1,5 @@
 <script lang="ts">
     import Task from "../models/task";
-    import {longpress} from "../lib/actions";
     import Fa from "svelte-fa/src/fa.svelte";
     import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
     import {faCircle} from "@fortawesome/free-regular-svg-icons/faCircle";
@@ -14,6 +13,7 @@
     import {faGripLinesVertical} from "@fortawesome/free-solid-svg-icons/faGripLinesVertical";
     import {faClockRotateLeft} from "@fortawesome/free-solid-svg-icons/faClockRotateLeft";
     import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
+    import Button from "./Button.svelte";
 
     export let task: Task;
     export let index: number;
@@ -27,12 +27,12 @@
 <div
         class="task"
         class:done="{task.done}"
-        class:postponed="{task.postponed}"
         class:even="{index % 2 === 0}"
         class:isDragging="{isDragging}"
+        class:postponed="{task.postponed}"
+        data-task-id="{task.id}"
         on:dragend="{actions.dragEnd}"
         on:dragstart="{actions.dragStart}"
-        data-task-id="{task.id}"
 >
     <div class="number">{task.number || ''}</div>
     <div class="time">
@@ -53,12 +53,14 @@
                 on:mouseup="{actions.dragHandleUp}"
                 on:touchend|passive="{actions.dragHandleUp}"
                 on:touchstart|passive="{actions.dragHandleDown}"
+                tabindex="-1"
         >
             <Fa icon="{faBars}"/>
         </button>
         {#if task.postponed}
             <button class="restore"
                     on:click="{() => actions.restore(task, index)}"
+                    tabindex="-1"
             >
                 <Fa icon="{faClockRotateLeft}"/>
             </button>
@@ -68,18 +70,19 @@
             {:else}
                 <button class="create"
                         on:click="{() => actions.create(task, index)}"
+                        tabindex="-1"
                 >
                     <Fa icon="{faAdd}"/>
                 </button>
             {/if}
         {:else if task.todoistTaskId && !task.done && !task.postponed}
-            <button class="postpone"
-                    use:longpress
-                    on:shortpress="{() => actions.postponeTomorrow(task)}"
-                    on:longpress="{() => actions.postponeSaturday(task)}"
+            <Button class="postpone"
+                    on:sglclick="{() => actions.postponeTomorrow(task)}"
+                    on:dblclick="{() => actions.postponeSaturday(task)}"
+                    tabindex="-1"
             >
                 <Fa icon="{faClock}"/>
-            </button>
+            </Button>
         {:else}
             <span></span>
         {/if}
@@ -125,11 +128,11 @@
     <input bind:this="{refTitle}"
            bind:value="{task.title}"
            class="title"
+           on:blur="{(event) => actions.inputBlur(task, index, event)}"
            on:input="{actions.updated}"
            on:keydown="{(event) => actions.inputKeyDown(task, index, event, refTitle)}"
            on:keyup="{(event) => actions.inputKeyUp(task, index, event, refTitle)}"
            on:paste="{(event) => actions.paste(task, index, event)}"
-           on:blur="{(event) => actions.inputBlur(task, index, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">
@@ -208,13 +211,6 @@
         font-size: 0.9rem;
         color: grey;
         background-color: white;
-    }
-
-    button {
-        background-color: transparent;
-        border-style: none;
-        color: var(--text-color);
-        cursor: pointer;
     }
 
     input {

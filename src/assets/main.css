@@ -22,9 +22,15 @@ body {
     color: var(--text-color);
 }
 
-#app input,
-#app button {
+#app input {
     color: var(--text-color);
+}
+
+#app button {
+    background-color: transparent;
+    border-style: none;
+    color: var(--text-color);
+    cursor: pointer;
 }
 
 #app input:disabled,
