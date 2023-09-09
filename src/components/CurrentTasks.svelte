@@ -685,6 +685,9 @@
 
         dragDrop(event) {
             resetLastMoveTopMemory();
+            if (event.target.dataset.index === undefined) {
+                return;
+            }
             let newIndex = parseInt(event.target.dataset.index);
             // console.debug("drop", event, newIndex);
             const dragTaskId = event.dataTransfer.getData("application/my-app");
@@ -693,7 +696,6 @@
             if (oldIndex < newIndex) {
                 --newIndex;
             }
-            // console.debug({dragTask, oldIndex, newIndex});
             tasks.splice(oldIndex, 1);
             tasks.splice(newIndex, 0, dragTask);
             tasks = tasks;
@@ -701,6 +703,9 @@
 
         dragOver(event) {
             // console.debug("over", event);
+            if (!event.target.classList.contains("dropZone")) {
+                return;
+            }
             activeDropZoneIndex = parseInt(event.target.dataset.index);
         },
 
@@ -712,13 +717,16 @@
         },
 
         dragEnter(event) {
-            console.log("enter", event.target);
+            console.debug("enter", event.target);
+            if (!event.target.classList.contains("dropZone")) {
+                return;
+            }
             event.dataTransfer.dropEffect = "move";
             activeDropZoneIndex = parseInt(event.target.dataset.index);
         },
 
         dragLeave(event) {
-            console.log("leave", event.target);
+            console.debug("leave", event.target);
             event.dataTransfer.dropEffect = "none";
             activeDropZoneIndex = null;
         },

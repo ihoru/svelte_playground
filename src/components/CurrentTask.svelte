@@ -202,7 +202,7 @@
 
     .task.isDragging {
         opacity: 0.5;
-        background-color: #ffffb4;
+        background-color: #c3ffb4;
     }
 
     .task > div {
