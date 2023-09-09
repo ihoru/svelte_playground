@@ -425,9 +425,9 @@
             if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
                 let dt = new Date();
                 let diffDays = 6 - dt.getDay();
-                if (diffDays === 1) {
-                    // if tomorrow is Saturday, then postpone task to the next Saturday
-                    diffDays = 8;
+                if (diffDays <= 1) {
+                    // if tomorrow or today is Saturday, then postpone task to the next Saturday
+                    diffDays += 7;
                 }
                 dt = addDays(dt, diffDays);
                 const dueDate = utils.dateFormat(dt);
