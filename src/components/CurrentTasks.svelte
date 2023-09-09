@@ -149,18 +149,30 @@
     }
 
     function clearAllTasks() {
+        if (!confirm("Clear all?")) {
+            return;
+        }
         tasks = [];
     }
 
     function clearPostponedTasks() {
+        if (!confirm("Clear postponed?")) {
+            return;
+        }
         tasks = tasks.filter((task: Task) => !task.postponed);
     }
 
     function clearDoneTasks() {
+        if (!confirm("Clear done?")) {
+            return;
+        }
         tasks = tasks.filter((task: Task) => !task.done);
     }
 
     function clearExternalTasks() {
+        if (!confirm("Clear imported?")) {
+            return;
+        }
         tasks = tasks.filter((task: Task) => !task.todoistTaskId);
     }
 
