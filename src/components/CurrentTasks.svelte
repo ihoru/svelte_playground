@@ -698,17 +698,20 @@
         },
 
         dragDrop(event) {
+            // console.debug("drop", event);
             resetLastMoveTopMemory();
             if (event.target.dataset.index === undefined) {
                 return;
             }
             let newIndex = parseInt(event.target.dataset.index);
-            // console.debug("drop", event, newIndex);
             const dragTaskId = event.dataTransfer.getData("application/my-app");
-            const oldIndex = tasks.findIndex((task: Task) => task.id === dragTaskId);
+            const oldIndex = findTaskIndex(dragTaskId);
             const dragTask = tasks[oldIndex];
             if (oldIndex < newIndex) {
                 --newIndex;
+            }
+            if (showActiveTasksOnly) {
+                newIndex = findTaskIndex(displayTasks[newIndex].id);
             }
             tasks.splice(oldIndex, 1);
             tasks.splice(newIndex, 0, dragTask);
