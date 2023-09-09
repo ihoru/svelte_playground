@@ -18,10 +18,15 @@
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
     import {tick} from "svelte";
+    import {faArrowDownAZ} from "@fortawesome/free-solid-svg-icons/faArrowDownAZ";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
+    export let showActiveTasksOnly = localStorage.getItem("showActiveTasksOnly") !== "false";
+
+    $: localStorage.setItem("showActiveTasksOnly", showActiveTasksOnly);
+    $: displayTasks = tasks.filter((task: Task) => showActiveTasksOnly && !task.done && !task.postponed || !showActiveTasksOnly);
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
@@ -96,6 +101,9 @@
     }
 
     async function tasksReorder(index: number = null) {
+        if (showActiveTasksOnly) {
+            return;
+        }
         resetLastMoveTopMemory();
         const focusedAt = document.activeElement;
         let refs;
@@ -730,33 +738,48 @@
 ></svelte:window>
 
 <div class="panel top">
-    <button on:click="{addTaskToTheEnd}" tabindex="-1">
-        <Fa icon="{faAdd}"/>
-    </button>
-    <button on:click="{clearAllTasks}" tabindex="-1">
-        <Fa icon="{faXmark}"/>
-    </button>
-    <button on:click="{clearDoneTasks}" tabindex="-1">
-        <Fa icon="{faXmark}"/>
-        <Fa icon="{faCircleCheck}"/>
-    </button>
-    <button on:click="{clearPostponedTasks}" tabindex="-1">
-        <Fa icon="{faXmark}"/>
-        <Fa icon="{faClock}"/>
-    </button>
-    <button on:click="{clearExternalTasks}" tabindex="-1">
-        <Fa icon="{faXmark}"/>
-        <Fa icon="{faNotEqual}"/>
-        <Fa icon="{faAdd}"/>
-    </button>
-    {#if todoistAPI}
-        <button disabled="{loading}" on:click="{fetchTodoistTasks}"
+    <div class="lineOne">
+        <button on:click="{addTaskToTheEnd}" tabindex="-1">
+            <Fa icon="{faAdd}"/>
+        </button>
+        <button on:click="{clearAllTasks}" tabindex="-1">
+            <Fa icon="{faXmark}"/>
+        </button>
+        <button on:click="{clearDoneTasks}" tabindex="-1">
+            <Fa icon="{faXmark}"/>
+            <Fa icon="{faCircleCheck}"/>
+        </button>
+        <button on:click="{clearPostponedTasks}" tabindex="-1">
+            <Fa icon="{faXmark}"/>
+            <Fa icon="{faClock}"/>
+        </button>
+        <button on:click="{clearExternalTasks}" tabindex="-1">
+            <Fa icon="{faXmark}"/>
+            <Fa icon="{faNotEqual}"/>
+            <Fa icon="{faAdd}"/>
+        </button>
+        {#if todoistAPI}
+            <button disabled="{loading}" on:click="{fetchTodoistTasks}"
+                    tabindex="-1"
+            >
+                <Fa icon="{faDownload}"/>
+                Todoist
+            </button>
+        {/if}
+    </div>
+    <div class="lineTwo">
+        <label>
+            <input bind:checked="{showActiveTasksOnly}" type="checkbox">
+            Show active only
+        </label>
+        <button disabled="{showActiveTasksOnly}"
+                on:click="{() => tasksReorder()}"
                 tabindex="-1"
         >
-            <Fa icon="{faDownload}"/>
-            Todoist
+            <Fa icon="{faArrowDownAZ}"/>
+            Sort
         </button>
-    {/if}
+    </div>
 </div>
 <div class="content">
     {#if tasks.length}
@@ -776,7 +799,7 @@
                     <hr/>
                 </div>
             </div>
-            {#each tasks as task, index (task.id)}
+            {#each displayTasks as task, index (task.id)}
                 <div
                         animate:flip="{{duration: 300}}"
                 >
@@ -824,8 +847,12 @@
         padding: .2rem .3rem;
     }
 
+    .panel .lineTwo {
+        padding-top: 0.5rem;
+    }
+
     .content {
-        margin: 1rem 0;
+        margin: 0.5rem 0;
     }
 
     .empty {
