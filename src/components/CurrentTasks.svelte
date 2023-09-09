@@ -292,7 +292,8 @@
             addTaskToTheEnd();
         } else if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "Escape") {
             if (!lastActiveElement && tasks.length) {
-                lastActiveElement = taskTitleRefs[tasks[tasks.length - 1].id];
+                const firstTask = tasks.find((t: Task) => !t.done) || tasks[0];
+                lastActiveElement = taskTitleRefs[firstTask.id];
             }
             if (activeElement && activeElement.tagName === "INPUT") {
                 activeElement.blur();
