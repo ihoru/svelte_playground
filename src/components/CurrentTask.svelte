@@ -43,7 +43,7 @@
         {/if}
     </div>
     <div class="mainActions">
-        <button on:click="{() => actions.delete(task, index)}"
+        <button on:click="{() => actions.delete(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faXmark}"/>
@@ -59,7 +59,7 @@
         </button>
         {#if task.postponed}
             <button class="restore"
-                    on:click="{() => actions.restore(task, index)}"
+                    on:click="{() => actions.restore(task)}"
                     tabindex="-1"
             >
                 <Fa icon="{faClockRotateLeft}"/>
@@ -69,7 +69,7 @@
                 <span></span>
             {:else}
                 <button class="create"
-                        on:click="{() => actions.create(task, index)}"
+                        on:click="{() => actions.create(task)}"
                         tabindex="-1"
                 >
                     <Fa icon="{faAdd}"/>
@@ -87,7 +87,7 @@
             <span></span>
         {/if}
         {#if task.title !== ""}
-            <button on:click="{() => actions.toggle(task, index)}"
+            <button on:click="{() => actions.toggle(task)}"
                     tabindex="-1"
             >
                 {#if task.done}
@@ -106,9 +106,9 @@
            enterkeyhint="Next"
            min="0"
            on:input="{actions.updated}"
-           on:keydown="{(event) => actions.inputKeyDown(task, index, event, refDuration)}"
-           on:keyup="{(event) => actions.inputKeyUp(task, index, event, refDuration)}"
-           on:paste="{(event) => actions.paste(task, index, event)}"
+           on:keydown="{(event) => actions.inputKeyDown(task, event, refDuration)}"
+           on:keyup="{(event) => actions.inputKeyUp(task, event, refDuration)}"
+           on:paste="{(event) => actions.paste(task, event)}"
            tabindex="{task.done ? -1 : 0}"
            type="number"
     />
@@ -130,34 +130,34 @@
            bind:value="{task.title}"
            class="title"
            enterkeyhint="Enter"
-           on:blur="{(event) => actions.inputBlur(task, index, event)}"
+           on:blur="{(event) => actions.inputBlur(task, event)}"
            on:input="{actions.updated}"
-           on:keydown="{(event) => actions.inputKeyDown(task, index, event, refTitle)}"
-           on:keyup="{(event) => actions.inputKeyUp(task, index, event, refTitle)}"
-           on:paste="{(event) => actions.paste(task, index, event)}"
+           on:keydown="{(event) => actions.inputKeyDown(task, event, refTitle)}"
+           on:keyup="{(event) => actions.inputKeyUp(task, event, refTitle)}"
+           on:paste="{(event) => actions.paste(task, event)}"
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">
         <button class="top"
-                on:click="{() => actions.moveTop(task, index)}"
+                on:click="{() => actions.moveTop(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faUpLong}"/>
         </button>
         <button class="bottom"
-                on:click="{() => actions.moveBottom(task, index)}"
+                on:click="{() => actions.moveBottom(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faDownLong}"/>
         </button>
         <button class="up"
-                on:click="{() => actions.moveDown(task, index)}"
+                on:click="{() => actions.moveDown(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faChevronDown}"/>
         </button>
         <button class="up"
-                on:click="{() => actions.moveUp(task, index)}"
+                on:click="{() => actions.moveUp(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faChevronUp}"/>
