@@ -168,11 +168,12 @@
         align-items: center;
         display: grid;
         grid-template-columns:
-            /*1.4rem*/ 6.2rem
+            1.4rem
+            6.2rem
             6.5rem
             2rem
             0.8rem
-            minmax(6rem, auto)
+            minmax(6.5rem, auto)
             6.5rem;
         font-family: monospace;
         width: 100%;
@@ -207,7 +208,6 @@
     }
 
     .number {
-        display: none;
         font-size: 0.9rem;
         color: grey;
         background-color: white;

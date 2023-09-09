@@ -848,4 +848,12 @@
     .dropZone.isActive hr {
         border-top: 1px solid gray;
     }
+
+    .current :global(button) {
+        background-color: transparent;
+        border-style: none;
+        color: var(--text-color);
+        cursor: pointer;
+    }
+
 </style>
