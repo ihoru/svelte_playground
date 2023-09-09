@@ -102,6 +102,8 @@
 
     async function tasksReorder(index: number = null) {
         if (showActiveTasksOnly) {
+            // we often rely on updating the list of task, so do it
+            tasks = tasks;
             return;
         }
         resetLastMoveTopMemory();
