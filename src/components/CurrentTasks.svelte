@@ -101,11 +101,6 @@
     }
 
     async function tasksReorder(index: number = null) {
-        if (showActiveTasksOnly) {
-            // we often rely on updating the list of task, so do it
-            tasks = tasks;
-            return;
-        }
         resetLastMoveTopMemory();
         const focusedAt = document.activeElement;
         let refs;
@@ -244,7 +239,6 @@
                     if (
                         existingTask.done
                         || existingTask.postponed
-                        || existingTask.todoistCompleted
                         || existingTask.title !== title
                         || durationHasChanged
                         || existingTask.todoistPriority !== todoistPriority
@@ -256,7 +250,6 @@
                             existingTask.duration = duration;
                         }
                         existingTask.todoistPriority = todoistPriority;
-                        existingTask.todoistCompleted = false;
                         taskUpdated = true;
                     }
                     return;
@@ -275,13 +268,13 @@
         });
         if (!tasksToAdd.length) {
             if (taskUpdated) {
-                await tasksReorder();
+                tasks = tasks;
             }
             alert("No tasks found in Todoist");
             return;
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
-        await tasksReorder();
+        tasks = tasks;
     }
 
     function recalculateNumbers() {
@@ -347,40 +340,46 @@
         async toggle(task: Task) {
             resetLastMoveTopMemory();
             task.done = !task.done;
-            const index = findTaskIndex(task.id);
-            await tasksReorder(index);
-            if (!task.done) {
-                return;
-            }
-            if (!task.duration && !task.title) {
-                // delete empty task
-                tasks.splice(index, 1);
-                return;
-            }
-            task.startTime = null;
-            task.finishTime = utils.timeFormat();
-            task.postponed = false;
-            tasks = tasks;
-            if (!task.todoistTaskId || task.todoistCompleted) {
-                return;
-            }
-            task.todoistCompleted = true;
-            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
-            if (!todoistTask) {
-                task.resetTodoist();
-                await tasksReorder(index);
-                return;
-            }
-            if (todoistTask.is_completed) {
-                return;
-            }
-            const today = utils.dateFormat();
-            const isDue = todoistTask.due && (todoistTask.due.date === today || isPast(parseISO(todoistTask.due.date)));
-            if (isDue) {
-                await todoistAPI.complete(task.todoistTaskId);
-            } else if (task.postponed) {
-                await todoistAPI.postpone(task.todoistTaskId, today, todoistTask);
-                await todoistAPI.complete(task.todoistTaskId);
+            let tasksUpdated = false;
+            await (async function () {
+                const index = findTaskIndex(task.id);
+                if (!task.done) {
+                    return;
+                }
+                if (!task.duration && !task.title) {
+                    // delete empty task
+                    tasks.splice(index, 1);
+                    return;
+                }
+                task.startTime = null;
+                task.finishTime = utils.timeFormat();
+                task.postponed = false;
+                tasksUpdated = true;
+                tasks = tasks;
+                if (!task.todoistTaskId) {
+                    return;
+                }
+                const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+                if (!todoistTask) {
+                    task.resetTodoist();
+                    tasksUpdated = true;
+                    tasks = tasks;
+                    return;
+                }
+                if (todoistTask.is_completed) {
+                    return;
+                }
+                const today = utils.dateFormat();
+                const isDue = todoistTask.due && (todoistTask.due.date === today || isPast(parseISO(todoistTask.due.date)));
+                if (isDue) {
+                    await todoistAPI.complete(task.todoistTaskId);
+                } else if (task.postponed) {
+                    await todoistAPI.postpone(task.todoistTaskId, today, todoistTask);
+                    await todoistAPI.complete(task.todoistTaskId);
+                }
+            })();
+            if (!tasksUpdated) {
+                tasks = tasks;
             }
         },
 
@@ -392,8 +391,7 @@
 
         async restore(task: Task) {
             task.postponed = false;
-            const index = findTaskIndex(task.id);
-            await tasksReorder(index);
+            tasks = tasks;
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();
@@ -415,11 +413,11 @@
 
         async postponeTomorrow(task: Task) {
             task.postponed = true;
+            tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
                 focusedAt.blur();
             }
-            await tasksReorder();
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();
@@ -438,11 +436,11 @@
 
         async postponeSaturday(task: Task) {
             task.postponed = true;
+            tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
                 focusedAt.blur();
             }
-            await tasksReorder();
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();

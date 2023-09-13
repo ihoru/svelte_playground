@@ -6,7 +6,6 @@ export default class Task {
         public duration: number | null = null,
         public todoistTaskId: string = "",
         public todoistPriority: number = 0,
-        public todoistCompleted: boolean = false,
         public number: number | null = null,
         public id: string = randomId(),
         public startTime: string | null = null,
@@ -26,6 +25,5 @@ export default class Task {
     resetTodoist() {
         this.todoistTaskId = "";
         this.todoistPriority = 0;
-        this.todoistCompleted = false;
     }
 }
