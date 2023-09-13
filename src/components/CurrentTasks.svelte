@@ -241,7 +241,7 @@
                 }
                 const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
                 if (existingTask) {
-                    const durationHasChanged = !existingTask.duration && duration;
+                    const durationHasChanged = existingTask.duration === null && duration;
                     if (
                         existingTask.done
                         || existingTask.postponed
