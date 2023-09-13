@@ -86,7 +86,7 @@
         {:else}
             <span></span>
         {/if}
-        {#if task.title !== ""}
+        {#if task.title !== "" && !task.postponed}
             <button on:click="{() => actions.toggle(task)}"
                     tabindex="-1"
             >
