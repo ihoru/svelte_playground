@@ -25,8 +25,16 @@
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
     export let showActiveTasksOnly = localStorage.getItem("showActiveTasksOnly") !== "false";
 
-    $: localStorage.setItem("showActiveTasksOnly", showActiveTasksOnly);
-    $: displayTasks = tasks.filter((task: Task) => showActiveTasksOnly && !task.done && !task.postponed || !showActiveTasksOnly);
+    $: {
+        localStorage.setItem("showActiveTasksOnly", showActiveTasksOnly);
+        resetJustChanged();
+    }
+    $: displayTasks = tasks.filter((task: Task) => {
+        if (showActiveTasksOnly) {
+            return !task.done && !task.postponed || task.justChanged;
+        }
+        return true;
+    });
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
@@ -102,6 +110,7 @@
 
     async function tasksReorder(index: number = null) {
         resetLastMoveTopMemory();
+        resetJustChanged();
         const focusedAt = document.activeElement;
         let refs;
         if (focusedAt.tagName === "INPUT" && index !== null) {
@@ -256,6 +265,7 @@
                             existingTask.duration = duration;
                         }
                         existingTask.todoistPriority = todoistPriority;
+                        existingTask.justChanged = true;
                         taskUpdated = true;
                     }
                     return;
@@ -270,6 +280,7 @@
             }
             if (!task.postponed && !task.done && !taskIds.includes(task.todoistTaskId)) {
                 task.postponed = "?";
+                task.justChanged = true;
                 taskUpdated = true;
             }
         }
@@ -345,10 +356,20 @@
         lastMoveTopAt = lastMoveTopIndex = null;
     }
 
+    function resetJustChanged() {
+        tasks.forEach((task: Task) => {
+            if (task.justChanged) {
+                task.justChanged = false;
+            }
+        });
+    }
+
     const taskActions = {
         async toggle(task: Task) {
             resetLastMoveTopMemory();
+            resetJustChanged();
             task.done = !task.done;
+            task.justChanged = true;
             let tasksUpdated = false;
             await (async function () {
                 const index = findTaskIndex(task.id);
@@ -399,7 +420,9 @@
         },
 
         async restore(task: Task) {
+            resetJustChanged();
             task.postponed = null;
+            task.justChanged = true;
             tasks = tasks;
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
@@ -423,7 +446,9 @@
         async postponeTomorrow(task: Task) {
             const dt = addDays(new Date(), 1);
             const dueDate = utils.dateFormat(dt);
+            resetJustChanged();
             task.postponed = dueDate;
+            task.justChanged = true;
             tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
@@ -452,7 +477,9 @@
             }
             dt = addDays(dt, diffDays);
             const dueDate = utils.dateFormat(dt);
+            resetJustChanged();
             task.postponed = dueDate;
+            task.justChanged = true;
             tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
@@ -709,6 +736,7 @@
         dragDrop(event) {
             // console.debug("drop", event);
             resetLastMoveTopMemory();
+            resetJustChanged();
             if (event.target.dataset.index === undefined) {
                 return;
             }
@@ -838,12 +866,13 @@
                         animate:flip="{{duration: 300}}"
                 >
                     <CurrentTask
+                            actions="{taskActions}"
                             bind:refDuration="{taskDurationRefs[task.id]}"
                             bind:refTitle="{taskTitleRefs[task.id]}"
-                            {task}
-                            {index}
-                            actions="{taskActions}"
                             isDragging="{draggingTaskId === task.id}"
+                            {index}
+                            {showActiveTasksOnly}
+                            {task}
                     />
                     <div class="dropZoneHolder">
                         <div

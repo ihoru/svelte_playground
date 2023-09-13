@@ -21,6 +21,7 @@
     export let refTitle: HTMLInputElement;
     export let actions;
     export let isDragging: boolean;
+    export let showActiveTasksOnly: boolean;
 
 </script>
 
@@ -29,6 +30,7 @@
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
         class:isDragging="{isDragging}"
+        class:justChanged="{task.justChanged}"
         class:postponed="{!!task.postponed}"
         data-task-id="{task.id}"
         on:dragend="{actions.dragEnd}"
@@ -50,15 +52,19 @@
         >
             <Fa icon="{faXmark}"/>
         </button>
-        <button class="dragHandle"
-                on:mousedown="{actions.dragHandleDown}"
-                on:mouseup="{actions.dragHandleUp}"
-                on:touchend|passive="{actions.dragHandleUp}"
-                on:touchstart|passive="{actions.dragHandleDown}"
-                tabindex="-1"
-        >
-            <Fa icon="{faBars}"/>
-        </button>
+        {#if showActiveTasksOnly && task.justChanged}
+            <span></span>
+        {:else}
+            <button class="dragHandle"
+                    on:mousedown="{actions.dragHandleDown}"
+                    on:mouseup="{actions.dragHandleUp}"
+                    on:touchend|passive="{actions.dragHandleUp}"
+                    on:touchstart|passive="{actions.dragHandleDown}"
+                    tabindex="-1"
+            >
+                <Fa icon="{faBars}"/>
+            </button>
+        {/if}
         {#if task.postponed}
             <button class="restore"
                     on:click="{() => actions.restore(task)}"
@@ -196,6 +202,15 @@
 
     .task.even.postponed {
         background-color: rgba(255, 255, 180, 60%);
+    }
+
+
+    .task.justChanged {
+        background-color: rgba(180, 188, 255, 0.3);
+    }
+
+    .task.even.justChanged {
+        background-color: rgba(180, 188, 255, 60%);
     }
 
     .task.even {
