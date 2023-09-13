@@ -707,11 +707,11 @@
             const dragTaskId = event.dataTransfer.getData("application/my-app");
             const oldIndex = findTaskIndex(dragTaskId);
             const dragTask = tasks[oldIndex];
-            if (oldIndex < newIndex) {
-                --newIndex;
-            }
             if (showActiveTasksOnly) {
                 newIndex = findTaskIndex(displayTasks[newIndex].id);
+            }
+            if (oldIndex < newIndex) {
+                --newIndex;
             }
             tasks.splice(oldIndex, 1);
             tasks.splice(newIndex, 0, dragTask);
