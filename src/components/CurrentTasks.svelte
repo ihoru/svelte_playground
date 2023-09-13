@@ -119,6 +119,9 @@
             if (taskA.done && !taskB.done) {
                 return -1;
             }
+            if (taskA.done && taskB.done) {
+                return taskA.finishTime < taskB.finishTime ? -1 : 0;
+            }
             if (!taskA.postponed && taskB.postponed) {
                 return -1;
             }
