@@ -29,14 +29,16 @@
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
         class:isDragging="{isDragging}"
-        class:postponed="{task.postponed}"
+        class:postponed="{!!task.postponed}"
         data-task-id="{task.id}"
         on:dragend="{actions.dragEnd}"
         on:dragstart="{actions.dragStart}"
 >
     <div class="number">{task.number || ''}</div>
     <div class="time">
-        {#if task.startTime && task.finishTime}
+        {#if task.postponed}
+            {task.postponed}
+        {:else if task.startTime && task.finishTime}
             {task.startTime}-{task.finishTime}
         {:else if task.finishTime}
             {task.finishTime}

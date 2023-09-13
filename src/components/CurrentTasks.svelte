@@ -128,6 +128,9 @@
             if (taskA.postponed && !taskB.postponed) {
                 return 1;
             }
+            if (taskA.postponed && taskB.postponed) {
+                return taskA.postponed < taskB.postponed ? -1 : 0;
+            }
             return 0;
         });
         if (refs) {
@@ -247,7 +250,7 @@
                         || existingTask.todoistPriority !== todoistPriority
                     ) {
                         existingTask.done = false;
-                        existingTask.postponed = false;
+                        existingTask.postponed = null;
                         existingTask.title = title;
                         if (durationHasChanged) {
                             existingTask.duration = duration;
@@ -260,20 +263,23 @@
                 return new Task(title, duration, todoistTaskId, todoistPriority);
             },
         ).filter(Boolean);
-        tasks.forEach((task: Task) => {
+        for (let i = 0; i < tasks.length; ++i) {
+            let task = tasks[i];
             if (!task.todoistTaskId) {
-                return;
+                continue;
             }
             if (!task.postponed && !task.done && !taskIds.includes(task.todoistTaskId)) {
-                task.postponed = true;
+                task.postponed = "?";
                 taskUpdated = true;
             }
-        });
+        }
         if (!tasksToAdd.length) {
             if (taskUpdated) {
                 tasks = tasks;
+                alert("No new tasks, but something has changed");
+            } else {
+                alert("Nothing has changed");
             }
-            alert("No tasks found in Todoist");
             return;
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
@@ -356,7 +362,7 @@
                 }
                 task.startTime = null;
                 task.finishTime = utils.timeFormat();
-                task.postponed = false;
+                task.postponed = null;
                 tasksUpdated = true;
                 tasks = tasks;
                 if (!task.todoistTaskId) {
@@ -393,7 +399,7 @@
         },
 
         async restore(task: Task) {
-            task.postponed = false;
+            task.postponed = null;
             tasks = tasks;
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
@@ -415,7 +421,9 @@
         },
 
         async postponeTomorrow(task: Task) {
-            task.postponed = true;
+            const dt = addDays(new Date(), 1);
+            const dueDate = utils.dateFormat(dt);
+            task.postponed = dueDate;
             tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
@@ -431,14 +439,20 @@
                 return;
             }
             if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
-                const dt = addDays(new Date(), 1);
-                const dueDate = utils.dateFormat(dt);
                 await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
             }
         },
 
         async postponeSaturday(task: Task) {
-            task.postponed = true;
+            let dt = new Date();
+            let diffDays = 6 - dt.getDay();
+            if (diffDays <= 1) {
+                // if tomorrow or today is Saturday, then postpone task to the next Saturday
+                diffDays += 7;
+            }
+            dt = addDays(dt, diffDays);
+            const dueDate = utils.dateFormat(dt);
+            task.postponed = dueDate;
             tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
@@ -454,14 +468,6 @@
                 return;
             }
             if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
-                let dt = new Date();
-                let diffDays = 6 - dt.getDay();
-                if (diffDays <= 1) {
-                    // if tomorrow or today is Saturday, then postpone task to the next Saturday
-                    diffDays += 7;
-                }
-                dt = addDays(dt, diffDays);
-                const dueDate = utils.dateFormat(dt);
                 await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
             }
         },

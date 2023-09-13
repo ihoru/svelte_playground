@@ -11,7 +11,7 @@ export default class Task {
         public startTime: string | null = null,
         public finishTime: string | null = null,
         public done: boolean = false,
-        public postponed: boolean = false,
+        public postponed: string = null,
     ) {
     }
 
@@ -23,6 +23,7 @@ export default class Task {
     }
 
     resetTodoist() {
+        this.postponed = null;
         this.todoistTaskId = "";
         this.todoistPriority = 0;
     }
