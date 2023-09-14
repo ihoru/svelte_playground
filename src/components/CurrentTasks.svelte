@@ -17,7 +17,7 @@
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
-    import {tick} from "svelte";
+    import {onMount, tick} from "svelte";
     import {faArrowDownAZ} from "@fortawesome/free-solid-svg-icons/faArrowDownAZ";
 
     export let ignoreNextTasksUpdate: boolean = false;
@@ -69,6 +69,10 @@
             save(tasks);
         }
     }
+
+    onMount(() => {
+        resetJustChanged();
+    });
 
     function tasksUpdated() {
         console.log("tasks updated", tasks);
@@ -357,11 +361,16 @@
     }
 
     function resetJustChanged() {
+        let anythingHasChanged = false;
         tasks.forEach((task: Task) => {
             if (task.justChanged) {
                 task.justChanged = false;
+                anythingHasChanged = true;
             }
         });
+        if (anythingHasChanged) {
+            tasks = tasks;
+        }
     }
 
     const taskActions = {
