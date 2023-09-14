@@ -455,8 +455,7 @@
             tasks = tasks;
         },
 
-        async postponeTomorrow(task: Task) {
-            const dt = addDays(new Date(), 1);
+        async postpone(task: Task, dt: Date) {
             const dueDate = utils.dateFormat(dt);
             resetJustChanged();
             task.postponed = dueDate;
@@ -480,6 +479,11 @@
             }
         },
 
+        async postponeTomorrow(task: Task) {
+            const dt = addDays(new Date(), 1);
+            await taskActions.postpone(task, dt);
+        },
+
         async postponeSaturday(task: Task) {
             let dt = new Date();
             let diffDays = 6 - dt.getDay();
@@ -488,27 +492,18 @@
                 diffDays += 7;
             }
             dt = addDays(dt, diffDays);
-            const dueDate = utils.dateFormat(dt);
-            resetJustChanged();
-            task.postponed = dueDate;
-            task.justChanged = true;
-            tasks = tasks;
-            const focusedAt = document.activeElement;
-            if (focusedAt && focusedAt.tagName === "INPUT") {
-                focusedAt.blur();
+            await taskActions.postpone(task, dt);
+        },
+
+        async postponeSunday(task: Task) {
+            let dt = new Date();
+            let diffDays = 7 - dt.getDay();
+            if (diffDays <= 1) {
+                // if tomorrow or today is Sunday, then postpone task to the next Saturday
+                diffDays += 7;
             }
-            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
-            if (!todoistTask) {
-                task.resetTodoist();
-                tasks = tasks;
-                return;
-            }
-            if (todoistTask.is_completed) {
-                return;
-            }
-            if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
-                await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
-            }
+            dt = addDays(dt, diffDays);
+            await taskActions.postpone(task, dt);
         },
 
         moveUp(task: Task, size = 1) {

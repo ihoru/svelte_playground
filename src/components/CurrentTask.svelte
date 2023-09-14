@@ -85,8 +85,9 @@
             {/if}
         {:else if task.todoistTaskId && !task.done && !task.postponed}
             <Button class="postpone"
-                    on:sglclick="{() => actions.postponeTomorrow(task)}"
-                    on:dblclick="{() => actions.postponeSaturday(task)}"
+                    on:singleclick="{() => actions.postponeTomorrow(task)}"
+                    on:doubleclick="{() => actions.postponeSaturday(task)}"
+                    on:tripleclick="{() => actions.postponeSunday(task)}"
                     tabindex="-1"
             >
                 <Fa icon="{faClock}"/>

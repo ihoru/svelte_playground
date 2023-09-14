@@ -1,24 +1,38 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
 
-    const dispatch = createEventDispatcher();
+    const dispatcher = createEventDispatcher();
 
-    let waiting = false;
-    let timeout = null;
-    export let delay = 300;
+    let clicks: number;
+    let timeout: number;
+    let dt: Date;
+    export let delay = 600;
+
+    function now(): number {
+        return (new Date()).getTime();
+    }
+
+    function dispatch(name) {
+        return () => {
+            dispatcher(name);
+            clearTimeout(timeout);
+            clicks = dt = timeout = null;
+        };
+    }
 
     function handleClickType() {
-        if (waiting) {
+        if (clicks == 1) {
             clearTimeout(timeout);
-            dispatch("dblclick");
-            waiting = false;
+            clicks = 2;
+            timeout = setTimeout(dispatch("doubleclick"), delay - (now() - dt));
+            return;
+        } else if (clicks == 2) {
+            dispatch("tripleclick")();
             return;
         }
-        waiting = true;
-        timeout = setTimeout(() => {
-            dispatch("sglclick");
-            waiting = false;
-        }, delay);
+        clicks = 1;
+        dt = now();
+        timeout = setTimeout(dispatch("singleclick"), delay);
     }
 </script>
 
