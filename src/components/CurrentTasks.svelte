@@ -221,21 +221,21 @@
         const searchDuration = /( \d{1,2}[mh])$/i;
         const taskIds = [];
         const tasksToAdd = todoistTasks.map(
-            (task: TodoistTask) => {
-                let title = task.content;
-                const todoistTaskId = task.id;
-                const todoistPriority = task.priority;
+            (todoistTask: TodoistTask) => {
+                let title = todoistTask.content;
+                const todoistTaskId = todoistTask.id;
+                const todoistPriority = todoistTask.priority;
                 if (
                     title.startsWith("*") ||
                     title.endsWith("~") ||
-                    task.labels.indexOf("noplan") !== -1
+                    todoistTask.labels.indexOf("noplan") !== -1
                 ) {
                     return;
                 }
                 taskIds.push(todoistTaskId);
                 let duration;
-                if (task.duration) {
-                    duration = task.duration.amount;
+                if (todoistTask.duration) {
+                    duration = todoistTask.duration.amount;
                 } else {
                     const hasDuration = title.match(searchDuration);
                     if (hasDuration) {
@@ -274,7 +274,9 @@
                     }
                     return;
                 }
-                return new Task(title, duration, todoistTaskId, todoistPriority);
+                const task = new Task(title, duration, todoistTaskId, todoistPriority);
+                task.justChanged = true;
+                return task;
             },
         ).filter(Boolean);
         for (let i = 0; i < tasks.length; ++i) {
