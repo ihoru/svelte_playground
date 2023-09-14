@@ -205,6 +205,7 @@
     }
 
     async function fetchTodoistTasks() {
+        resetJustChanged();
         loading = true;
         let todoistTasks;
         try {
