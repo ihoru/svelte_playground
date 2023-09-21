@@ -181,7 +181,7 @@
             2rem
             0.8rem
             minmax(6.5rem, auto)
-        /*6.5rem*/;
+            6.5rem;
         font-family: monospace;
         width: 100%;
         height: 1.7rem;
@@ -260,7 +260,7 @@
     }
 
     .additionalActions {
-        display: none;
+        display: grid;
         grid-template-columns: repeat(4, 1fr);
     }
 
