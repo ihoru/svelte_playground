@@ -17,8 +17,9 @@
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
-    import {onMount, tick} from "svelte";
+    import {tick} from "svelte";
     import {faArrowDownAZ} from "@fortawesome/free-solid-svg-icons/faArrowDownAZ";
+    import {faEraser} from "@fortawesome/free-solid-svg-icons/faEraser";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
@@ -27,11 +28,10 @@
 
     $: {
         localStorage.setItem("showActiveTasksOnly", showActiveTasksOnly);
-        resetJustChanged();
     }
     $: displayTasks = tasks.filter((task: Task) => {
         if (showActiveTasksOnly) {
-            return !task.done && !task.postponed || task.justChanged;
+            return !task.done && !task.postponed || task.recentlyChanged;
         }
         return true;
     });
@@ -69,10 +69,6 @@
             save(tasks);
         }
     }
-
-    onMount(() => {
-        resetJustChanged();
-    });
 
     function tasksUpdated() {
         console.log("tasks updated", tasks);
@@ -114,7 +110,7 @@
 
     async function tasksReorder(index: number = null) {
         resetLastMoveTopMemory();
-        resetJustChanged();
+        resetRecentlyChanged();
         const focusedAt = document.activeElement;
         let refs;
         if (focusedAt.tagName === "INPUT" && index !== null) {
@@ -205,7 +201,7 @@
     }
 
     async function fetchTodoistTasks() {
-        resetJustChanged();
+        resetRecentlyChanged();
         loading = true;
         let todoistTasks;
         try {
@@ -281,13 +277,13 @@
                             existingTask.duration = duration;
                         }
                         existingTask.todoistPriority = todoistPriority;
-                        existingTask.justChanged = true;
+                        existingTask.recentlyChanged = true;
                         taskUpdated = true;
                     }
                     return;
                 }
                 const task = new Task(title, duration, todoistTaskId, todoistPriority);
-                task.justChanged = true;
+                task.recentlyChanged = true;
                 return task;
             },
         ).filter(Boolean);
@@ -298,13 +294,14 @@
             }
             if (!task.postponed && !task.done && !taskIds.includes(task.todoistTaskId)) {
                 task.postponed = "?";
-                task.justChanged = true;
+                task.recentlyChanged = true;
                 taskUpdated = true;
             }
         }
         if (!tasksToAdd.length) {
             if (taskUpdated) {
                 tasks = tasks;
+                setRecentlyChangedTimeout();
                 alert("No new tasks, but something has changed");
             } else {
                 alert("Nothing has changed");
@@ -313,6 +310,7 @@
         }
         tasks.splice(tasks.length, 0, ...tasksToAdd);
         tasks = tasks;
+        setRecentlyChangedTimeout();
     }
 
     function recalculateNumbers() {
@@ -374,25 +372,38 @@
         lastMoveTopAt = lastMoveTopIndex = null;
     }
 
-    function resetJustChanged() {
-        let anythingHasChanged = false;
+    function resetRecentlyChanged() {
+        let changed = false;
         tasks.forEach((task: Task) => {
-            if (task.justChanged) {
-                task.justChanged = false;
-                anythingHasChanged = true;
+            if (task.recentlyChanged) {
+                task.recentlyChanged = false;
+                changed = true;
             }
         });
-        if (anythingHasChanged) {
+        if (changed) {
             tasks = tasks;
         }
+        if (recentlyChangedTimeout) {
+            clearTimeout(recentlyChangedTimeout);
+            recentlyChangedTimeout = null;
+        }
+    }
+
+    let recentlyChangedTimeout;
+
+    function setRecentlyChangedTimeout() {
+        if (recentlyChangedTimeout) {
+            clearTimeout(recentlyChangedTimeout);
+        }
+        recentlyChangedTimeout = setTimeout(resetRecentlyChanged, 5 * 60 * 1000);
     }
 
     const taskActions = {
         async toggle(task: Task) {
             resetLastMoveTopMemory();
-            resetJustChanged();
+            setRecentlyChangedTimeout();
             task.done = !task.done;
-            task.justChanged = true;
+            task.recentlyChanged = true;
             let tasksUpdated = false;
             await (async function () {
                 const index = findTaskIndex(task.id);
@@ -443,9 +454,9 @@
         },
 
         async restore(task: Task) {
-            resetJustChanged();
+            setRecentlyChangedTimeout();
             task.postponed = null;
-            task.justChanged = true;
+            task.recentlyChanged = true;
             tasks = tasks;
             const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
             if (!todoistTask) {
@@ -468,9 +479,9 @@
 
         async postpone(task: Task, dt: Date) {
             const dueDate = utils.dateFormat(dt);
-            resetJustChanged();
+            setRecentlyChangedTimeout();
             task.postponed = dueDate;
-            task.justChanged = true;
+            task.recentlyChanged = true;
             tasks = tasks;
             const focusedAt = document.activeElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
@@ -754,7 +765,6 @@
         dragDrop(event) {
             // console.debug("drop", event);
             resetLastMoveTopMemory();
-            resetJustChanged();
             if (event.target.dataset.index === undefined) {
                 return;
             }
@@ -858,6 +868,13 @@
         >
             <Fa icon="{faArrowDownAZ}"/>
             Sort
+        </button>
+        <button
+                disabled="{!recentlyChangedTimeout}"
+                on:click="{resetRecentlyChanged}"
+                tabindex="-1"
+        >
+            <Fa icon="{faEraser}"/>
         </button>
     </div>
 </div>

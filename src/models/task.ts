@@ -12,7 +12,7 @@ export default class Task {
         public finishTime: string | null = null,
         public done: boolean = false,
         public postponed: string = null,
-        public justChanged: boolean = false,
+        public recentlyChanged: boolean = false,
     ) {
     }
 

@@ -78,6 +78,10 @@
     function saveCurrentTasks(tasks: Array<Task>) {
         console.info("! saveCurrentTasks");
         const timestamp = (new Date()).getTime();
+        tasks = JSON.parse(JSON.stringify(tasks));
+        tasks.forEach((task: Task) => {
+            task.recentlyChanged = false;
+        });
         saveLocalCurrentTasks(tasks, timestamp);
         saveServerCurrentTasks(tasks, timestamp, currentTasksTimestamp);
     }

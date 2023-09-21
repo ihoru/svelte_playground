@@ -30,7 +30,7 @@
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
         class:isDragging="{isDragging}"
-        class:justChanged="{task.justChanged}"
+        class:recentlyChanged="{task.recentlyChanged}"
         class:postponed="{!!task.postponed}"
         data-task-id="{task.id}"
         on:dragend="{actions.dragEnd}"
@@ -52,7 +52,7 @@
         >
             <Fa icon="{faXmark}"/>
         </button>
-        {#if showActiveTasksOnly && task.justChanged}
+        {#if showActiveTasksOnly && task.recentlyChanged}
             <span></span>
         {:else}
             <button class="dragHandle"
@@ -206,11 +206,11 @@
     }
 
 
-    .task.justChanged {
+    .task.recentlyChanged {
         background-color: rgba(180, 188, 255, 0.3);
     }
 
-    .task.even.justChanged {
+    .task.even.recentlyChanged {
         background-color: rgba(180, 188, 255, 60%);
     }
 
