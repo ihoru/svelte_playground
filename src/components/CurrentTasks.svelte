@@ -152,6 +152,10 @@
         return tasks.findIndex((task) => task.id === taskId);
     }
 
+    function findVisibleTaskIndex(taskId): number | null {
+        return displayTasks.findIndex((task) => task.id === taskId);
+    }
+
     async function addTaskToTheEnd() {
         let index = 0;
         for (let i = tasks.length - 1; i >= 0; --i) {
@@ -323,8 +327,8 @@
         if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter") {
             addTaskToTheEnd();
         } else if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "Escape") {
-            if (!lastActiveElement && tasks.length) {
-                const firstTask = tasks.find((t: Task) => !t.done) || tasks[0];
+            if (!lastActiveElement && displayTasks.length) {
+                const firstTask = displayTasks.find((t: Task) => !t.done) || displayTasks[0];
                 lastActiveElement = taskTitleRefs[firstTask.id];
             }
             if (activeElement && activeElement.tagName === "INPUT") {
@@ -518,22 +522,26 @@
         },
 
         moveUp(task: Task, size = 1) {
-            const index = findTaskIndex(task.id);
-            if (index === 0) {
+            const displayIndex = findVisibleTaskIndex(task.id);
+            if (displayIndex === 0) {
                 return;
             }
-            const newIndex = Math.max(0, index - size);
+            const newDisplayIndex = Math.max(0, displayIndex - size);
+            const index = findTaskIndex(task.id);
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
         },
 
         moveDown(task: Task, size = 1) {
-            const index = findTaskIndex(task.id);
-            if (index + 1 === tasks.length) {
+            const displayIndex = findVisibleTaskIndex(task.id);
+            if (displayIndex + 1 === displayTasks.length) {
                 return;
             }
-            const newIndex = Math.min(tasks.length - 1, index + size);
+            const newDisplayIndex = Math.min(displayTasks.length - 1, displayIndex + size);
+            const index = findTaskIndex(task.id);
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
@@ -630,7 +638,7 @@
         async inputKeyDown(task: Task, event: KeyboardEvent, ref: HTMLInputElement) {
             // keydown event, so we can prevent default of (de)incrementing input type=number
             console.debug("inputKeyDown", event);
-            const index = findTaskIndex(task.id);
+            const index = findVisibleTaskIndex(task.id);
             const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
             const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
             const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
@@ -643,13 +651,13 @@
             }
             const jumpSize = 5;
             if (noSpecial && event.key === "ArrowUp" && index) {
-                focusTask = tasks[index - 1];
-            } else if (noSpecial && event.key === "ArrowDown" && index + 1 < tasks.length) {
-                focusTask = tasks[index + 1];
+                focusTask = displayTasks[index - 1];
+            } else if (noSpecial && event.key === "ArrowDown" && index + 1 < displayTasks.length) {
+                focusTask = displayTasks[index + 1];
             } else if (noSpecial && event.key === "PageUp") {
-                focusTask = tasks[Math.max(0, index - jumpSize)];
+                focusTask = displayTasks[Math.max(0, index - jumpSize)];
             } else if (noSpecial && event.key === "PageDown") {
-                focusTask = tasks[Math.min(tasks.length - 1, index + jumpSize)];
+                focusTask = displayTasks[Math.min(displayTasks.length - 1, index + jumpSize)];
             } else if (onlyShift && event.key === "ArrowUp") {
                 this.moveUp(task);
             } else if (onlyShift && event.key === "ArrowDown") {
@@ -680,7 +688,7 @@
 
         async inputKeyUp(task: Task, event: KeyboardEvent, ref: HTMLInputElement) {
             console.debug("inputKeyUp", event);
-            let index = findTaskIndex(task.id);
+            let index = findVisibleTaskIndex(task.id);
             const onlyAlt = event.altKey && !event.shiftKey && !event.ctrlKey;
             const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
             const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
@@ -689,26 +697,28 @@
             let focusOn;
             let focusTask: Task | null;
             if (event.key === "Delete" && onlyAlt) {
-                this.delete(task);
-                if (index == tasks.length) {
+                if (index + 1 === displayTasks.length) {
                     --index;
+                } else {
+                    ++index;
                 }
-                focusTask = tasks[index];
+                focusTask = displayTasks[index];
+                this.delete(task);
             } else if (noSpecial && event.key === "ArrowLeft" && inputType === "title" && !task.title) {
                 focusOn = taskDurationRefs[task.id];
             } else if (noSpecial && event.key === "ArrowRight" && inputType === "duration" && !task.duration) {
                 focusOn = taskTitleRefs[task.id];
             } else if (noSpecial && event.key === "Enter") {
-                focusTask = this.add(index + 1);
+                focusTask = this.add(findTaskIndex(task.id) + 1);
             } else if (onlyCtrl && event.key === "Enter") {
-            } else if (onlyAlt && event.key === "PageUp" && tasks.length) {
-                focusTask = tasks.find((t: Task) => !t.done) || tasks[0];
-            } else if (onlyAlt && event.key === "PageDown" && tasks.length) {
-                focusTask = tasks[tasks.length - 1];
+            } else if (onlyAlt && event.key === "PageUp" && displayTasks.length) {
+                focusTask = displayTasks.find((t: Task) => !t.done) || displayTasks[0];
+            } else if (onlyAlt && event.key === "PageDown" && displayTasks.length) {
+                focusTask = displayTasks[displayTasks.length - 1];
             } else if (onlyAlt && event.key === "Enter") {
                 this.toggle(task).then();
             } else if (onlyShift && event.key === "Enter") {
-                focusTask = this.add(index);
+                focusTask = this.add(findTaskIndex(task.id));
             } else {
                 return;
             }
