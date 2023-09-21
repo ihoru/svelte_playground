@@ -28,6 +28,7 @@
 
     $: {
         localStorage.setItem("showActiveTasksOnly", showActiveTasksOnly);
+        resetLastMoveTopMemory();
     }
     $: displayTasks = tasks.filter((task: Task) => {
         if (showActiveTasksOnly) {
@@ -103,7 +104,6 @@
 
     async function tasksReorder(index: number = null) {
         resetLastMoveTopMemory();
-        resetRecentlyChanged();
         const focusedAt = document.activeElement;
         let refs;
         if (focusedAt.tagName === "INPUT" && index !== null) {
@@ -366,6 +366,7 @@
     }
 
     function resetRecentlyChanged() {
+        resetLastMoveTopMemory();
         let changed = false;
         tasks.forEach((task: Task) => {
             if (task.recentlyChanged) {
@@ -393,7 +394,6 @@
 
     const taskActions = {
         async toggle(task: Task) {
-            resetLastMoveTopMemory();
             setRecentlyChangedTimeout();
             task.done = !task.done;
             task.recentlyChanged = true;
@@ -548,49 +548,40 @@
         },
 
         moveTop(task: Task) {
-            const index = findTaskIndex(task.id);
-            if (index === 0) {
+            const displayIndex = findVisibleTaskIndex(task.id);
+            if (displayIndex === 0) {
                 return;
             }
-            let newIndex = 0;
+            let newDisplayIndex = 0;
             const now = new Date();
             if (lastMoveTopAt && now - lastMoveTopAt > 30 * 1000) {
                 // if tasks were moved to the top fast enough they are placed one after each other, instead of in front
                 lastMoveTopAt = null;
             }
             if (lastMoveTopAt) {
-                newIndex = ++lastMoveTopIndex;
-            } else {
-                if (!tasks[index - 1].done) {
-                    for (let i = index - 1; i >= 0; i--) {
-                        if (tasks[i].done) {
-                            newIndex = i + 1;
-                            break;
-                        }
-                    }
+                newDisplayIndex = ++lastMoveTopIndex;
+                if (newDisplayIndex + 1 === displayTasks.length) {
+                    lastMoveTopIndex = newDisplayIndex = 0;
                 }
-                lastMoveTopIndex = newIndex;
+            } else {
+                lastMoveTopIndex = newDisplayIndex;
             }
             lastMoveTopAt = now;
+            const index = findTaskIndex(displayTasks[displayIndex].id);
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
         },
 
         moveBottom(task: Task) {
-            const index = findTaskIndex(task.id);
-            if (index + 1 === tasks.length) {
+            const displayIndex = findVisibleTaskIndex(task.id);
+            if (displayIndex + 1 === tasks.length) {
                 return;
             }
-            let newIndex = tasks.length;
-            if (!tasks[index + 1].postponed) {
-                for (let i = index + 1; i < tasks.length; i++) {
-                    if (tasks[i].postponed) {
-                        newIndex = i - 1;
-                        break;
-                    }
-                }
-            }
+            let newDisplayIndex = displayTasks.length - 1;
+            const index = findTaskIndex(displayTasks[displayIndex].id);
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
@@ -763,7 +754,6 @@
 
         dragDrop(event) {
             // console.debug("drop", event);
-            resetLastMoveTopMemory();
             if (event.target.dataset.index === undefined) {
                 return;
             }

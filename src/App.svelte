@@ -79,8 +79,16 @@
         console.info("! saveCurrentTasks");
         const timestamp = (new Date()).getTime();
         tasks = JSON.parse(JSON.stringify(tasks));
-        tasks.forEach((task: Task) => {
+        const ids = new Set();
+        tasks = tasks.filter((task: Task) => {
             task.recentlyChanged = false;
+            if (ids.has(task.id)) {
+                // prevent saving duplicate elements (might happen during development)
+                console.error(`Task.id=${task.id} was duplicated!`, task);
+                return false;
+            }
+            ids.add(task.id);
+            return true;
         });
         saveLocalCurrentTasks(tasks, timestamp);
         saveServerCurrentTasks(tasks, timestamp, currentTasksTimestamp);
