@@ -24,17 +24,27 @@
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
     export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
-    export let showActiveTasksOnly = localStorage.getItem("showActiveTasksOnly") !== "false";
+    export let filterBy = localStorage.getItem("filterBy") || "all";
 
     $: {
-        localStorage.setItem("showActiveTasksOnly", showActiveTasksOnly);
+        localStorage.setItem("filterBy", filterBy);
         resetLastMoveTopMemory();
     }
     $: displayTasks = tasks.filter((task: Task) => {
-        if (showActiveTasksOnly) {
-            return !task.done && !task.postponed || task.recentlyChanged;
+        if (task.recentlyChanged) {
+            return true;
         }
-        return true;
+        switch (filterBy) {
+            case "active":
+                return !task.done && !task.postponed;
+            case "done":
+                return task.done;
+            case "postponed":
+                return task.postponed;
+            case "all":
+                return true;
+        }
+        throw new Error(`Unknown value filterBy=${filterBy}`);
     });
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
@@ -779,9 +789,7 @@
             const dragTaskId = event.dataTransfer.getData("application/my-app");
             const oldIndex = findTaskIndex(dragTaskId);
             const dragTask = tasks[oldIndex];
-            if (showActiveTasksOnly) {
-                newIndex = findTaskIndex(displayTasks[newIndex].id);
-            }
+            newIndex = findTaskIndex(displayTasks[newIndex].id);
             if (oldIndex < newIndex) {
                 --newIndex;
             }
@@ -866,10 +874,15 @@
     </div>
     <div class="lineTwo">
         <label>
-            <input bind:checked="{showActiveTasksOnly}" type="checkbox">
-            Show active only
+            Show only:
+            <select bind:value="{filterBy}">
+                <option value="all">all</option>
+                <option value="active">active</option>
+                <option value="done">done</option>
+                <option value="postponed">postponed</option>
+            </select>
         </label>
-        <button disabled="{showActiveTasksOnly}"
+        <button disabled="{filterBy !== 'all'}"
                 on:click="{() => tasksReorder()}"
                 tabindex="-1"
         >
@@ -913,7 +926,6 @@
                             bind:refTitle="{taskTitleRefs[task.id]}"
                             isDragging="{draggingTaskId === task.id}"
                             {index}
-                            {showActiveTasksOnly}
                             {task}
                     />
                     <div class="dropZoneHolder">

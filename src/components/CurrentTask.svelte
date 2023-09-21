@@ -22,7 +22,6 @@
     export let refTitle: HTMLInputElement;
     export let actions;
     export let isDragging: boolean;
-    export let showActiveTasksOnly: boolean;
 
 </script>
 
