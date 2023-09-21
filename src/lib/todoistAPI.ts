@@ -44,6 +44,12 @@ export class TodoistAPI {
         return data;
     }
 
+    async getTasksByIds(ids: Array<number>) {
+        const data = await this._fetch<Array<TodoistTask>>(`tasks?ids=${ids.join(",")}`);
+        data.sort(this._sortTasks);
+        return data;
+    }
+
     getTask(taskId: string) {
         return this._fetch<TodoistTask>(`tasks/${taskId}`);
     }
