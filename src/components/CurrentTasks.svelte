@@ -360,6 +360,7 @@
     let draggingTaskId: string = null;
     let lastMoveTopAt: Date;
     let lastMoveTopIndex: number;
+    let lastFocusedTaskId;
 
     function resetLastMoveTopMemory() {
         lastMoveTopAt = lastMoveTopIndex = null;
@@ -547,6 +548,19 @@
             tasks = tasks;
         },
 
+        moveAfterFocused(task: Task) {
+            if (!lastFocusedTaskId) {
+                alert("Focus in any task first");
+                return;
+            }
+            const index = findTaskIndex(task.id);
+            const newIndex = findTaskIndex(lastFocusedTaskId) + 1;
+            tasks.splice(index, 1);
+            tasks.splice(newIndex, 0, task);
+            tasks = tasks;
+            lastFocusedTaskId = task.id;
+        },
+
         moveTop(task: Task) {
             const displayIndex = findVisibleTaskIndex(task.id);
             if (displayIndex === 0) {
@@ -727,8 +741,12 @@
             }
         },
 
-        async inputBlur(task: Task, event: KeyboardEvent) {
+        inputBlur(task: Task, event: KeyboardEvent) {
             event.target.value = task.title = task.title.trim();
+        },
+
+        inputFocus(task: Task, event: KeyboardEvent) {
+            lastFocusedTaskId = task.id;
         },
 
         dragHandleDown(event) {

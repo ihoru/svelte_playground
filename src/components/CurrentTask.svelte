@@ -14,6 +14,7 @@
     import {faClockRotateLeft} from "@fortawesome/free-solid-svg-icons/faClockRotateLeft";
     import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
     import Button from "./Button.svelte";
+    import {faLocationDot} from "@fortawesome/free-solid-svg-icons/faLocationDot";
 
     export let task: Task;
     export let index: number;
@@ -30,8 +31,8 @@
         class:done="{task.done}"
         class:even="{index % 2 === 0}"
         class:isDragging="{isDragging}"
-        class:recentlyChanged="{task.recentlyChanged}"
         class:postponed="{!!task.postponed}"
+        class:recentlyChanged="{task.recentlyChanged}"
         data-task-id="{task.id}"
         on:dragend="{actions.dragEnd}"
         on:dragstart="{actions.dragStart}"
@@ -110,6 +111,7 @@
            class="duration"
            enterkeyhint="Next"
            min="0"
+           on:focus="{(event) => actions.inputFocus(task, event)}"
            on:input="{actions.updated}"
            on:keydown="{(event) => actions.inputKeyDown(task, event, refDuration)}"
            on:keyup="{(event) => actions.inputKeyUp(task, event, refDuration)}"
@@ -136,6 +138,7 @@
            class="title"
            enterkeyhint="Enter"
            on:blur="{(event) => actions.inputBlur(task, event)}"
+           on:focus="{(event) => actions.inputFocus(task, event)}"
            on:input="{actions.updated}"
            on:keydown="{(event) => actions.inputKeyDown(task, event, refTitle)}"
            on:keyup="{(event) => actions.inputKeyUp(task, event, refTitle)}"
@@ -143,6 +146,12 @@
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">
+        <button class="afterFocused"
+                on:click="{() => actions.moveAfterFocused(task)}"
+                tabindex="-1"
+        >
+            <Fa icon="{faLocationDot}"/>
+        </button>
         <button class="top"
                 on:click="{() => actions.moveTop(task)}"
                 tabindex="-1"
@@ -261,7 +270,7 @@
 
     .additionalActions {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
 
     .priority {
