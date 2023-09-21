@@ -38,7 +38,6 @@
 
 <button {...$$props}
         on:click={handleClickType}
-        on:dblclick|preventDefault
 >
     <slot/>
 </button>
