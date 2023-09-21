@@ -52,19 +52,15 @@
         >
             <Fa icon="{faXmark}"/>
         </button>
-        {#if showActiveTasksOnly && task.recentlyChanged}
-            <span></span>
-        {:else}
-            <button class="dragHandle"
-                    on:mousedown="{actions.dragHandleDown}"
-                    on:mouseup="{actions.dragHandleUp}"
-                    on:touchend|passive="{actions.dragHandleUp}"
-                    on:touchstart|passive="{actions.dragHandleDown}"
-                    tabindex="-1"
-            >
-                <Fa icon="{faBars}"/>
-            </button>
-        {/if}
+        <button class="dragHandle"
+                on:mousedown="{actions.dragHandleDown}"
+                on:mouseup="{actions.dragHandleUp}"
+                on:touchend|passive="{actions.dragHandleUp}"
+                on:touchstart|passive="{actions.dragHandleDown}"
+                tabindex="-1"
+        >
+            <Fa icon="{faBars}"/>
+        </button>
         {#if task.postponed}
             <button class="restore"
                     on:click="{() => actions.restore(task)}"
