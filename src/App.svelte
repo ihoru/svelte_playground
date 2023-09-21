@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Help from "./components/Help.svelte";
     import CurrentTasks from "./components/CurrentTasks.svelte";
     import Task from "./models/task";
     import "reflect-metadata";
@@ -109,11 +108,10 @@
         </div>
     {/if}
     <CurrentTasks
-            save="{saveCurrentTasks}"
             bind:ignoreNextTasksUpdate="{ignoreNextCurrentTasksUpdate}"
+            save="{saveCurrentTasks}"
             tasks="{currentTasks}"
     ></CurrentTasks>
-    <Help/>
 </main>
 
 <style>
