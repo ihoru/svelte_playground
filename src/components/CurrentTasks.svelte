@@ -38,13 +38,6 @@
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
-    const canUndo = false, canRedo = false;// TODO:
-    const undo = () => null;// TODO:
-    const redo = undo;
-    // const {undo, redo, canUndo, canRedo} = useRefHistory(tasks, {
-    //     deep: true,
-    //     capacity: 10,
-    // });
     let lastActiveElement: HTMLInputElement;
     let lastTasksHash: string;
 
@@ -327,11 +320,7 @@
     function appKeyUp(event: KeyboardEvent) {
         console.debug("appKeyUp", event);
         const activeElement: HTMLInputElement = document.activeElement as HTMLInputElement;
-        if (event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "KeyZ") {
-            undo();
-        } else if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === "KeyZ") {
-            redo();
-        } else if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter") {
+        if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter") {
             addTaskToTheEnd();
         } else if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.code === "Escape") {
             if (!lastActiveElement && tasks.length) {
@@ -929,12 +918,6 @@
         <div class="empty">No tasks yet</div>
     {/if}
 </div>
-{#if false}
-    <div class="panel bottom">
-        <button disabled="{!canUndo}" on:click="{undo}" tabindex="-1">&laquo; undo</button>
-        <button disabled="{!canRedo}" on:click="{redo}" tabindex="-1">redo &raquo;</button>
-    </div>
-{/if}
 
 <style>
     .panel {
