@@ -110,7 +110,6 @@
 
 <svelte:window
         on:focus="{onWindowFocus}"
-        on:dblclick|preventDefault
 ></svelte:window>
 
 <main>
