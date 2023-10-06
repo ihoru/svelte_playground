@@ -44,9 +44,11 @@ export class TodoistAPI {
         return data;
     }
 
-    async getTasksByIds(ids: Array<number>) {
+    async getTasksByIds(ids: Array<number>, sort = true) {
         const data = await this._fetch<Array<TodoistTask>>(`tasks?ids=${ids.join(",")}`);
-        data.sort(this._sortTasks);
+        if (sort) {
+            data.sort(this._sortTasks);
+        }
         return data;
     }
 
@@ -87,6 +89,10 @@ export class TodoistAPI {
         } else {
             payload["due_date"] = dueDate;
         }
+        return this._fetch(`tasks/${taskId}`, {body: payload});
+    }
+
+    update(taskId: string, payload: object) {
         return this._fetch(`tasks/${taskId}`, {body: payload});
     }
 

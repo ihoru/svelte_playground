@@ -20,6 +20,7 @@
     import {tick} from "svelte";
     import {faArrowDownAZ} from "@fortawesome/free-solid-svg-icons/faArrowDownAZ";
     import {faEraser} from "@fortawesome/free-solid-svg-icons/faEraser";
+    import {faUpload} from "@fortawesome/free-solid-svg-icons/faUpload";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
@@ -102,7 +103,8 @@
             const duration = task.duration;
             if (task.done || task.postponed || !duration || duration <= 0) {
                 if (!task.done) {
-                    task.startTime = task.finishTime = null;
+                    task.startTime = utils.timeFormat(now);
+                    task.finishTime = null;
                 }
                 continue;
             }
@@ -236,65 +238,63 @@
         let taskUpdated = false;
         const searchDuration = /( \d{1,2}[mh])$/i;
         const taskIds = [];
-        const tasksToAdd = todoistTasks.map(
-            (todoistTask: TodoistTask) => {
-                let title = todoistTask.content;
-                const todoistTaskId = todoistTask.id;
-                const todoistPriority = todoistTask.priority;
+        const tasksToAdd = todoistTasks.map((todoistTask: TodoistTask) => {
+            let title = todoistTask.content;
+            const todoistTaskId = todoistTask.id;
+            const todoistPriority = todoistTask.priority;
+            if (
+                title.startsWith("*") ||
+                title.endsWith("~") ||
+                todoistTask.labels.indexOf("noplan") !== -1
+            ) {
+                return;
+            }
+            taskIds.push(todoistTaskId);
+            let duration;
+            if (todoistTask.duration) {
+                duration = todoistTask.duration.amount;
+            } else {
+                const hasDuration = title.match(searchDuration);
+                if (hasDuration) {
+                    title = title.slice(0, title.length - hasDuration[0].length);
+                    duration = hasDuration[0].trim();
+                    let multiplier = 1;
+                    const lastCharacter = duration[duration.length - 1];
+                    if (lastCharacter === "h") {
+                        multiplier = 60;
+                        duration = duration.slice(0, duration.length - 1);
+                    } else if (lastCharacter === "m") {
+                        duration = duration.slice(0, duration.length - 1);
+                    }
+                    duration = parseInt(duration) * multiplier;
+                }
+            }
+            const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
+            if (existingTask) {
+                const durationHasChanged = existingTask.duration === null && duration;
                 if (
-                    title.startsWith("*") ||
-                    title.endsWith("~") ||
-                    todoistTask.labels.indexOf("noplan") !== -1
+                    existingTask.done
+                    || existingTask.postponed
+                    || existingTask.title !== title
+                    || durationHasChanged
+                    || existingTask.todoistPriority !== todoistPriority
                 ) {
-                    return;
-                }
-                taskIds.push(todoistTaskId);
-                let duration;
-                if (todoistTask.duration) {
-                    duration = todoistTask.duration.amount;
-                } else {
-                    const hasDuration = title.match(searchDuration);
-                    if (hasDuration) {
-                        title = title.slice(0, title.length - hasDuration[0].length);
-                        duration = hasDuration[0].trim();
-                        let multiplier = 1;
-                        const lastCharacter = duration[duration.length - 1];
-                        if (lastCharacter === "h") {
-                            multiplier = 60;
-                            duration = duration.slice(0, duration.length - 1);
-                        } else if (lastCharacter === "m") {
-                            duration = duration.slice(0, duration.length - 1);
-                        }
-                        duration = parseInt(duration) * multiplier;
+                    existingTask.done = false;
+                    existingTask.postponed = null;
+                    existingTask.title = title;
+                    if (durationHasChanged) {
+                        existingTask.duration = duration;
                     }
+                    existingTask.todoistPriority = todoistPriority;
+                    existingTask.recentlyChanged = true;
+                    taskUpdated = true;
                 }
-                const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
-                if (existingTask) {
-                    const durationHasChanged = existingTask.duration === null && duration;
-                    if (
-                        existingTask.done
-                        || existingTask.postponed
-                        || existingTask.title !== title
-                        || durationHasChanged
-                        || existingTask.todoistPriority !== todoistPriority
-                    ) {
-                        existingTask.done = false;
-                        existingTask.postponed = null;
-                        existingTask.title = title;
-                        if (durationHasChanged) {
-                            existingTask.duration = duration;
-                        }
-                        existingTask.todoistPriority = todoistPriority;
-                        existingTask.recentlyChanged = true;
-                        taskUpdated = true;
-                    }
-                    return;
-                }
-                const task = new Task(title, duration, todoistTaskId, todoistPriority);
-                task.recentlyChanged = true;
-                return task;
-            },
-        ).filter(Boolean);
+                return;
+            }
+            const task = new Task(title, duration, todoistTaskId, todoistPriority);
+            task.recentlyChanged = true;
+            return task;
+        }).filter(Boolean);
         for (let i = 0; i < tasks.length; ++i) {
             let task = tasks[i];
             if (!task.todoistTaskId) {
@@ -319,6 +319,55 @@
         tasks.splice(tasks.length, 0, ...tasksToAdd);
         tasks = tasks;
         setRecentlyChangedTimeout();
+    }
+
+    async function uploadTodoistTasks() {
+        loading = true;
+        try {
+            let todoistTasks;
+            const ids = tasks.map(
+                (task: Task) => !task.done && !task.postponed && task.todoistTaskId,
+            ).filter(Boolean);
+            if (!ids.length) {
+                alert("Nothing to save");
+                return;
+            }
+            try {
+                todoistTasks = await todoistAPI.getTasksByIds(ids, false);
+            } catch (e) {
+                console.error(e);
+                alert("Error fetching tasks from Todoist");
+                return;
+            }
+            if (!todoistTasks.length) {
+                alert("Tasks were not found on Todoist");
+                return;
+            }
+            const today = utils.dateFormat();
+            try {
+                for (const todoistTask of todoistTasks) {
+                    const taskId = todoistTask.id;
+                    const task = displayTasks.find((t) => t.todoistTaskId === taskId);
+                    const payload = {};
+                    if (todoistTask.due.is_recurring) {
+                        payload["due_string"] = todoistTask.due.string;
+                    }
+                    payload["due_datetime"] = `${today}T${task.startTime}:00`;
+                    if (task.duration) {
+                        payload["duration"] = task.duration;
+                        payload["duration_unit"] = "minute";
+                    }
+                    await todoistAPI.update(taskId, payload);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error updating tasks in Todoist");
+                return;
+            }
+            alert("Saved");
+        } finally {
+            loading = false;
+        }
     }
 
     function recalculateNumbers() {
@@ -877,6 +926,12 @@
             >
                 <Fa icon="{faDownload}"/>
                 Todoist
+            </button>
+            <button disabled="{loading}" on:click="{uploadTodoistTasks}"
+                    tabindex="-1"
+            >
+                <Fa icon="{faUpload}"/>
+                Save
             </button>
         {/if}
     </div>

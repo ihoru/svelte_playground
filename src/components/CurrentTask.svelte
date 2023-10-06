@@ -42,6 +42,8 @@
             {task.postponed}
         {:else if task.startTime && task.finishTime}
             {task.startTime}-{task.finishTime}
+        {:else if task.startTime}
+            {task.startTime}
         {:else if task.finishTime}
             {task.finishTime}
         {/if}
