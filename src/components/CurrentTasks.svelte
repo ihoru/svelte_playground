@@ -29,6 +29,7 @@
     $: {
         localStorage.setItem("filterBy", filterBy);
         resetLastMoveTopMemory();
+        resetRecentlyChanged();
     }
     $: displayTasks = tasks.filter((task: Task) => {
         if (task.recentlyChanged) {
@@ -873,15 +874,11 @@
         {/if}
     </div>
     <div class="lineTwo">
-        <label>
-            Show only:
-            <select bind:value="{filterBy}">
-                <option value="all">all</option>
-                <option value="active">active</option>
-                <option value="done">done</option>
-                <option value="postponed">postponed</option>
-            </select>
-        </label>
+        Show:
+        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="all"/> all</label>
+        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="active"/> active</label>
+        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="done"/> done</label>
+        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/> postponed</label>
         <button disabled="{filterBy !== 'all'}"
                 on:click="{() => tasksReorder()}"
                 tabindex="-1"
