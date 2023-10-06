@@ -409,21 +409,17 @@
             setRecentlyChangedTimeout();
             task.done = !task.done;
             task.recentlyChanged = true;
-            let tasksUpdated = false;
-            await (async function () {
-                const index = findTaskIndex(task.id);
-                if (!task.done) {
-                    return;
-                }
+            const index = findTaskIndex(task.id);
+            if (task.done) {
                 if (!task.duration && !task.title) {
                     // delete empty task
                     tasks.splice(index, 1);
+                    tasks = tasks;
                     return;
                 }
                 task.startTime = null;
                 task.finishTime = utils.timeFormat();
                 task.postponed = null;
-                tasksUpdated = true;
                 tasks = tasks;
                 if (!task.todoistTaskId) {
                     return;
@@ -431,7 +427,6 @@
                 const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
                 if (!todoistTask) {
                     task.resetTodoist();
-                    tasksUpdated = true;
                     tasks = tasks;
                     return;
                 }
@@ -442,13 +437,24 @@
                 const isDue = todoistTask.due && (todoistTask.due.date === today || isPast(parseISO(todoistTask.due.date)));
                 if (isDue) {
                     await todoistAPI.complete(task.todoistTaskId);
-                } else if (task.postponed) {
-                    await todoistAPI.postpone(task.todoistTaskId, today, todoistTask);
-                    await todoistAPI.complete(task.todoistTaskId);
                 }
-            })();
-            if (!tasksUpdated) {
+            } else {
                 tasks = tasks;
+                if (!task.todoistTaskId) {
+                    return;
+                }
+                const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+                if (!todoistTask) {
+                    task.resetTodoist();
+                    tasks = tasks;
+                    return;
+                }
+                if (todoistTask.is_completed) {
+                    await todoistAPI.reopen(task.todoistTaskId);
+                } else {
+                    const today = utils.dateFormat();
+                    await todoistAPI.postpone(task.todoistTaskId, today, todoistTask);
+                }
             }
         },
 
