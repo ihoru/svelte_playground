@@ -253,10 +253,11 @@
             let duration;
             if (todoistTask.duration) {
                 duration = todoistTask.duration.amount;
-            } else {
-                const hasDuration = title.match(searchDuration);
-                if (hasDuration) {
-                    title = title.slice(0, title.length - hasDuration[0].length);
+            }
+            const hasDuration = title.match(searchDuration);
+            if (hasDuration) {
+                title = title.slice(0, title.length - hasDuration[0].length);
+                if (!duration) {
                     duration = hasDuration[0].trim();
                     let multiplier = 1;
                     const lastCharacter = duration[duration.length - 1];
