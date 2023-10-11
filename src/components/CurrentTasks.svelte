@@ -14,7 +14,6 @@
     import {faCircleCheck} from "@fortawesome/free-regular-svg-icons/faCircleCheck";
     import {faClock} from "@fortawesome/free-regular-svg-icons/faClock";
     import {faDownload} from "@fortawesome/free-solid-svg-icons/faDownload";
-    import {faNotEqual} from "@fortawesome/free-solid-svg-icons/faNotEqual";
     import {faXmark} from "@fortawesome/free-solid-svg-icons/faXmark";
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
@@ -54,6 +53,7 @@
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
     let lastActiveElement: HTMLInputElement;
     let lastTasksHash: string;
+    let showDeletePanel = false;
 
     const todoistAccessToken = import.meta.env.MY_TODOIST_ACCESS_TOKEN || "";
     const todoistAPI = todoistAccessToken ? new TodoistAPI(todoistAccessToken) : null;
@@ -163,15 +163,15 @@
     }
 
     function findTask(taskId): Task | null {
-        return tasks.find((task) => task.id === taskId);
+        return tasks.find((task: Task) => task.id === taskId);
     }
 
     function findTaskIndex(taskId): number | null {
-        return tasks.findIndex((task) => task.id === taskId);
+        return tasks.findIndex((task: Task) => task.id === taskId);
     }
 
     function findVisibleTaskIndex(taskId): number | null {
-        return displayTasks.findIndex((task) => task.id === taskId);
+        return displayTasks.findIndex((task: Task) => task.id === taskId);
     }
 
     async function addTaskToTheEnd() {
@@ -187,32 +187,87 @@
         taskTitleRefs[task.id].focus();
     }
 
-    function clearAllTasks() {
-        if (!confirm("Clear all?")) {
+    async function toggleShowDeletePanel() {
+        showDeletePanel = !showDeletePanel;
+    }
+
+    function deleteAllTasks() {
+        if (!confirm("Delete all tasks?")) {
             return;
         }
         tasks = [];
     }
 
-    function clearPostponedTasks() {
-        if (!confirm("Clear postponed?")) {
+    function deletePostponedTasks() {
+        if (!confirm("Delete postponed tasks?")) {
             return;
         }
         tasks = tasks.filter((task: Task) => !task.postponed);
     }
 
-    function clearDoneTasks() {
-        if (!confirm("Clear done?")) {
+    function deleteDoneTasks() {
+        if (!confirm("Delete done tasks?")) {
             return;
         }
         tasks = tasks.filter((task: Task) => !task.done);
     }
 
-    function clearExternalTasks() {
-        if (!confirm("Clear imported?")) {
+    async function deleteCompletelyDoneTasks() {
+        if (!confirm("Delete completely (in Todoist) done tasks?")) {
+            return;
+        }
+        const ids = tasks
+            .filter((task: Task) => task.todoistTaskId && task.done)
+            .map((task: Task) => task.todoistTaskId);
+        if (!ids.length) {
+            alert("Nothing to check");
+            return;
+        }
+        const todoistTasks = await todoistAPI.getTasksByIds(ids, false);
+        const completedTaskIds = todoistTasks
+            .filter((todoistTask: TodoistTask) => todoistTask.is_completed)
+            .map((todoistTask: TodoistTask) => todoistTask.id);
+        const diff = ids.length - completedTaskIds.length;
+        if (!diff) {
+            alert("Nothing to delete");
+            return;
+        }
+        tasks = tasks.filter((task: Task) => !completedTaskIds.includes(task.todoistTaskId));
+        alert(`${diff} tasks deleted`);
+    }
+
+    function deleteInternalDoneTasks() {
+        if (!confirm("Delete manually added done tasks?")) {
+            return;
+        }
+        tasks = tasks.filter((task: Task) => task.todoistTaskId || !task.done);
+    }
+
+    function deleteImportedTasks() {
+        if (!confirm("Delete imported tasks?")) {
             return;
         }
         tasks = tasks.filter((task: Task) => !task.todoistTaskId);
+    }
+
+    async function deleteNonExistingImportedTasks() {
+        if (!confirm("Delete imported not existing anymore tasks?")) {
+            return;
+        }
+        const ids = tasks.filter((task: Task) => task.todoistTaskId).map((task: Task) => task.todoistTaskId);
+        if (!ids.length) {
+            alert("Nothing to check");
+            return;
+        }
+        const todoistTasks = await todoistAPI.getTasksByIds(ids, false);
+        const diff = ids.length - todoistTasks.length;
+        if (!diff) {
+            alert("Nothing to delete");
+            return;
+        }
+        const todoistTaskIds = todoistTasks.map((todoistTask: TodoistTask) => todoistTask.id);
+        tasks = tasks.filter((task: Task) => todoistTaskIds.includes(task.todoistTaskId));
+        alert(`${diff} tasks deleted`);
     }
 
     async function fetchTodoistTasks() {
@@ -301,30 +356,70 @@
             task.recentlyChanged = true;
             return task;
         }).filter(Boolean);
+        const retrievePostponeDateTodoistTaskIds = [];
         for (let i = 0; i < tasks.length; ++i) {
             let task = tasks[i];
             if (!task.todoistTaskId) {
                 continue;
             }
             if (!task.postponed && !task.done && !taskIds.includes(task.todoistTaskId)) {
+                retrievePostponeDateTodoistTaskIds.push(task.todoistTaskId);
                 task.postponed = "?";
                 task.recentlyChanged = true;
                 taskUpdated = true;
             }
         }
-        if (!tasksToAdd.length) {
-            if (taskUpdated) {
-                tasks = tasks;
-                setRecentlyChangedTimeout();
-                alert("No new tasks, but something has changed");
-            } else {
-                alert("Nothing has changed");
-            }
+        if (tasksToAdd.length) {
+            tasks.splice(tasks.length, 0, ...tasksToAdd);
+        } else if (taskUpdated) {
+            alert("No new tasks, but something has changed");
+        } else {
+            alert("Nothing has changed");
+        }
+        if (tasksToAdd.length || taskUpdated) {
+            tasks = tasks;
+            setRecentlyChangedTimeout();
+        }
+        await retrievePostponeDates(retrievePostponeDateTodoistTaskIds);
+        await retrievePostponeDates(tasks.filter(t => t.postponed === "?").map(t => t.todoistTaskId));
+    }
+
+    async function retrievePostponeDates(todoistTaskIds) {
+        if (!todoistTaskIds.length) {
             return;
         }
-        tasks.splice(tasks.length, 0, ...tasksToAdd);
-        tasks = tasks;
-        setRecentlyChangedTimeout();
+        const todoistTasks = Object.fromEntries((await todoistAPI.getTasksByIds(todoistTaskIds, false))
+            .map((todoistTask: TodoistTask) => [todoistTask.id, todoistTask]));
+        let changed = false;
+        let index = tasks.length - 1;
+        while (index >= 0) {
+            const task: Task = tasks[index];
+            index -= 1;
+            if (!task.todoistTaskId || !todoistTaskIds.includes(task.todoistTaskId)) {
+                continue;
+            }
+            const todoistTask: TodoistTask = todoistTasks[task.todoistTaskId];
+            if (!todoistTask) {
+                // task was deleted in Todoist
+                tasks.splice(index + 1, 1); // we use reversed while because of this deletion
+            } else if (todoistTask.is_completed) {
+                task.done = true;
+                task.postponed = null;
+            } else if (!todoistTask.is_completed) {
+                if (todoistTask.due) {
+                    task.postponed = dateHumanFormat(parseISO(todoistTask.due.date));
+                } else {
+                    task.postponed = "N/A";
+                }
+            } else {
+                continue;
+            }
+            task.recentlyChanged = true;
+            changed = true;
+        }
+        if (changed) {
+            tasks = tasks;
+        }
     }
 
     async function uploadTodoistTasks() {
@@ -906,25 +1001,12 @@
 ></svelte:window>
 
 <div class="panel top">
-    <div class="lineOne">
+    <div>
         <button on:click="{addTaskToTheEnd}" tabindex="-1">
             <Fa icon="{faAdd}"/>
         </button>
-        <button on:click="{clearAllTasks}" tabindex="-1">
+        <button on:click="{toggleShowDeletePanel}" tabindex="-1">
             <Fa icon="{faXmark}"/>
-        </button>
-        <button on:click="{clearDoneTasks}" tabindex="-1">
-            <Fa icon="{faXmark}"/>
-            <Fa icon="{faCircleCheck}"/>
-        </button>
-        <button on:click="{clearPostponedTasks}" tabindex="-1">
-            <Fa icon="{faXmark}"/>
-            <Fa icon="{faClock}"/>
-        </button>
-        <button on:click="{clearExternalTasks}" tabindex="-1">
-            <Fa icon="{faXmark}"/>
-            <Fa icon="{faNotEqual}"/>
-            <Fa icon="{faAdd}"/>
         </button>
         {#if todoistAPI}
             <button disabled="{loading}" on:click="{fetchTodoistTasks}"
@@ -941,12 +1023,43 @@
             </button>
         {/if}
     </div>
-    <div class="lineTwo">
-        Show:
+    {#if showDeletePanel}
+        <div>
+            Delete:
+            <button on:click="{deleteAllTasks}" tabindex="-1">
+                all
+            </button>
+            <button on:click="{deleteDoneTasks}" tabindex="-1">
+                <Fa icon="{faCircleCheck}"/>
+            </button>
+            <button on:click="{deletePostponedTasks}" tabindex="-1">
+                <Fa icon="{faClock}"/>
+            </button>
+            <button on:click="{deleteCompletelyDoneTasks}" tabindex="-1">
+                completely
+                <Fa icon="{faCircleCheck}"/>
+            </button>
+            <button on:click="{deleteInternalDoneTasks}" tabindex="-1">
+                internal
+                <Fa icon="{faCircleCheck}"/>
+            </button>
+            <button on:click="{deleteImportedTasks}" tabindex="-1">
+                imported
+            </button>
+            <button on:click="{deleteNonExistingImportedTasks}" tabindex="-1">
+                imported deleted
+            </button>
+        </div>
+    {/if}
+    <div>
         <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="all"/> all</label>
         <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="active"/> active</label>
-        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="done"/> done</label>
-        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/> postponed</label>
+        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="done"/>
+            <Fa icon="{faCircleCheck}"/>
+        </label>
+        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/>
+            <Fa icon="{faClock}"/>
+        </label>
         <button disabled="{filterBy !== 'all'}"
                 on:click="{() => tasksReorder()}"
                 tabindex="-1"
@@ -964,7 +1077,7 @@
     </div>
 </div>
 <div class="content">
-    {#if tasks.length}
+    {#if displayTasks.length}
         <div class="current"
              class:draggingActive="{draggingTaskId !== null}"
         >
@@ -1009,6 +1122,8 @@
                 </div>
             {/each}
         </div>
+    {:else if tasks.length}
+        <div class="empty">No tasks for current filter</div>
     {:else}
         <div class="empty">No tasks yet</div>
     {/if}
@@ -1023,7 +1138,7 @@
         padding: .2rem .3rem;
     }
 
-    .panel .lineTwo {
+    .panel > div:not(:first-child) {
         padding-top: 0.5rem;
     }
 

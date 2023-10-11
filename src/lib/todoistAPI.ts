@@ -2,7 +2,7 @@ export interface Due {
     is_recurring: boolean;
     string: string;
     date: string;
-    datetime: string;
+    datetime?: string;
     timezone: string;
 }
 
@@ -45,6 +45,9 @@ export class TodoistAPI {
     }
 
     async getTasksByIds(ids: Array<number>, sort = true) {
+        if (!ids.length) {
+            return [];
+        }
         const data = await this._fetch<Array<TodoistTask>>(`tasks?ids=${ids.join(",")}`);
         if (sort) {
             data.sort(this._sortTasks);
