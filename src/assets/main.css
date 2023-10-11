@@ -26,6 +26,7 @@ body {
 #app button,
 #app input {
     color: var(--text-color);
+    cursor: pointer;
 }
 
 #app input:disabled,

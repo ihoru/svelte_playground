@@ -18,9 +18,9 @@
     import {flip} from "svelte/animate";
     import {md5} from "pure-md5";
     import {tick} from "svelte";
-    import {faArrowDownAZ} from "@fortawesome/free-solid-svg-icons/faArrowDownAZ";
     import {faEraser} from "@fortawesome/free-solid-svg-icons/faEraser";
     import {faUpload} from "@fortawesome/free-solid-svg-icons/faUpload";
+    import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
@@ -35,6 +35,9 @@
     $: displayTasks = tasks.filter((task: Task) => {
         if (task.recentlyChanged) {
             return true;
+        }
+        if (searchPhrase) {
+            return task.title.includes(searchPhrase);
         }
         switch (filterBy) {
             case "active":
@@ -185,6 +188,25 @@
         const task = taskActions.add(index + 1);
         await tick();
         taskTitleRefs[task.id].focus();
+    }
+
+    let showSearchInput = false;
+    let searchPhrase = "";
+    let searchInputRef: HTMLInputElement;
+
+    async function toggleSearch() {
+        showSearchInput = !showSearchInput;
+        if (showSearchInput) {
+            await tick();
+            searchInputRef.focus();
+        } else {
+            searchPhrase = "";
+        }
+    }
+
+    function hideSearch() {
+        showSearchInput = false;
+        searchPhrase = "";
     }
 
     async function toggleShowDeletePanel() {
@@ -1008,6 +1030,13 @@
         <button on:click="{toggleShowDeletePanel}" tabindex="-1">
             <Fa icon="{faXmark}"/>
         </button>
+        <button
+                disabled="{!recentlyChangedTimeout}"
+                on:click="{resetRecentlyChanged}"
+                tabindex="-1"
+        >
+            <Fa icon="{faEraser}"/>
+        </button>
         {#if todoistAPI}
             <button disabled="{loading}" on:click="{fetchTodoistTasks}"
                     tabindex="-1"
@@ -1052,14 +1081,27 @@
         </div>
     {/if}
     <div>
-        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="all"/> all</label>
-        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="active"/> active</label>
-        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="done"/>
-            <Fa icon="{faCircleCheck}"/>
-        </label>
-        <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/>
-            <Fa icon="{faClock}"/>
-        </label>
+        <button id="searchBtn" on:click="{toggleSearch}" tabindex="-1">
+            <Fa icon="{faSearch}"/>
+        </button>
+        {#if showSearchInput}
+            <input type="text" id="searchInput"
+                   bind:value="{searchPhrase}"
+                   bind:this="{searchInputRef}"
+                   on:blur="{hideSearch}"
+            />
+        {:else}
+            <span id="filterPane">
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="all"/> all</label>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="active"/> active</label>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="done"/>
+                    <Fa icon="{faCircleCheck}"/>
+                </label>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/>
+                    <Fa icon="{faClock}"/>
+                </label>
+            </span>
+        {/if}
         <!--
         <button disabled="{filterBy !== 'all'}"
                 on:click="{() => tasksReorder()}"
@@ -1069,13 +1111,6 @@
             Sort
         </button>
         -->
-        <button
-                disabled="{!recentlyChangedTimeout}"
-                on:click="{resetRecentlyChanged}"
-                tabindex="-1"
-        >
-            <Fa icon="{faEraser}"/>
-        </button>
     </div>
 </div>
 <div class="content">
@@ -1124,6 +1159,8 @@
                 </div>
             {/each}
         </div>
+    {:else if tasks.length && searchPhrase}
+        <div class="empty">No tasks including search phrase</div>
     {:else if tasks.length}
         <div class="empty">No tasks for current filter</div>
     {:else}
@@ -1144,8 +1181,18 @@
         padding-top: 0.5rem;
     }
 
-    #search {
-        width: 9.9rem;
+    #searchInput {
+        width: 14rem;
+    }
+
+    #searchBtn {
+        border-style: none;
+        background-color: transparent;
+    }
+
+    #filterPane {
+        width: 14rem;
+        display: inline-block;
     }
 
     .content {
@@ -1189,8 +1236,6 @@
     .current :global(button) {
         background-color: transparent;
         border-style: none;
-        color: var(--text-color);
-        cursor: pointer;
     }
 
 </style>
