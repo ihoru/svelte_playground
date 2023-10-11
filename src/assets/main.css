@@ -23,21 +23,21 @@ body {
     color: var(--text-color);
 }
 
-#app button,
-#app input {
+button,
+input {
     color: var(--text-color);
 }
 
-#app button {
+button {
     cursor: pointer;
 }
 
-#app button:disabled {
+button:disabled {
     cursor: not-allowed;
 }
 
-#app input:disabled,
-#app button:disabled {
+input:disabled,
+button:disabled {
     color: var(--disabled-text-color);
 }
 
