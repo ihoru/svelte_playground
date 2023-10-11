@@ -1060,6 +1060,7 @@
         <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/>
             <Fa icon="{faClock}"/>
         </label>
+        <!--
         <button disabled="{filterBy !== 'all'}"
                 on:click="{() => tasksReorder()}"
                 tabindex="-1"
@@ -1067,6 +1068,7 @@
             <Fa icon="{faArrowDownAZ}"/>
             Sort
         </button>
+        -->
         <button
                 disabled="{!recentlyChangedTimeout}"
                 on:click="{resetRecentlyChanged}"
@@ -1140,6 +1142,10 @@
 
     .panel > div:not(:first-child) {
         padding-top: 0.5rem;
+    }
+
+    #search {
+        width: 9.9rem;
     }
 
     .content {
