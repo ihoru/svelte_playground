@@ -40,8 +40,6 @@
     <div class="time">
         {#if task.postponed}
             {task.postponed}
-        {:else if task.startTime && task.finishTime}
-            {task.startTime}-{task.finishTime}
         {:else if task.startTime}
             {task.startTime}
         {:else if task.finishTime}
@@ -186,7 +184,7 @@
         display: grid;
         grid-template-columns:
             1.4rem
-            6.2rem
+            3.5rem
             6.5rem
             2rem
             0.8rem

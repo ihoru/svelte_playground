@@ -1,5 +1,6 @@
 <script lang="ts">
     import * as utils from "../lib/utils";
+    import {dateHumanFormat} from "../lib/utils";
     import CurrentTask from "./CurrentTask.svelte";
     import Fa from "svelte-fa/src/fa.svelte";
     import Task from "../models/task";
@@ -103,7 +104,11 @@
             const duration = task.duration;
             if (task.done || task.postponed || !duration || duration <= 0) {
                 if (!task.done) {
-                    task.startTime = utils.timeFormat(now);
+                    if (task.title) {
+                        task.startTime = utils.timeFormat(now);
+                    } else {
+                        task.startTime = null;
+                    }
                     task.finishTime = null;
                 }
                 continue;
@@ -541,7 +546,7 @@
         async postpone(task: Task, dt: Date) {
             const dueDate = utils.dateFormat(dt);
             setRecentlyChangedTimeout();
-            task.postponed = dueDate;
+            task.postponed = dateHumanFormat(dt);
             task.recentlyChanged = true;
             tasks = tasks;
             const focusedAt = document.activeElement;
