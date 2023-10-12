@@ -655,6 +655,10 @@
             tasks = tasks;
         },
 
+        play(task: Task) {
+
+        },
+
         async postpone(task: Task, dt: Date) {
             const dueDate = utils.dateFormat(dt);
             setRecentlyChangedTimeout();

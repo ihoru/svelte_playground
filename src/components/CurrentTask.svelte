@@ -15,6 +15,7 @@
     import {faAdd} from "@fortawesome/free-solid-svg-icons/faAdd";
     import Button from "./Button.svelte";
     import {faLocationDot} from "@fortawesome/free-solid-svg-icons/faLocationDot";
+    import {faCirclePlay} from "@fortawesome/free-regular-svg-icons/faCirclePlay";
 
     export let task: Task;
     export let index: number;
@@ -61,6 +62,18 @@
         >
             <Fa icon="{faBars}"/>
         </button>
+        {#if task.title !== "" && !task.postponed}
+            <button on:click="{() => actions.play(task)}"
+                    tabindex="-1"
+                    class="play"
+                    class:playUnknown="{true}"
+                    class:playKnown="{false}"
+            >
+                <Fa icon="{faCirclePlay}"/>
+            </button>
+        {:else}
+            <span></span>
+        {/if}
         {#if task.postponed}
             <button class="restore"
                     on:click="{() => actions.restore(task)}"
@@ -188,7 +201,7 @@
             6.5rem
             2rem
             0.8rem
-            minmax(6.5rem, auto)
+            minmax(11rem, auto)
             6.5rem;
         font-family: monospace;
         width: 100%;
@@ -264,7 +277,17 @@
 
     .mainActions {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .play {
+    }
+
+    .play.playUnknown {
+        opacity: 0.5;
+    }
+
+    .play.playKnown {
     }
 
     .additionalActions {
