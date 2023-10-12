@@ -1193,6 +1193,14 @@
         display: inline-block;
     }
 
+    #filterPane label {
+        vertical-align: middle;
+    }
+
+    #filterPane label :global(svg) {
+        vertical-align: initial !important;
+    }
+
     .content {
         margin: 0.5rem 0;
     }
