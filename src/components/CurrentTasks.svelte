@@ -179,10 +179,15 @@
 
     async function addTaskToTheEnd() {
         let index = 0;
-        for (let i = tasks.length - 1; i >= 0; --i) {
-            if (!tasks[i].postponed) {
-                index = i;
-                break;
+        const lastFocusedIndex = lastFocusedTaskId && findVisibleTaskIndex(lastFocusedTaskId);
+        if (lastFocusedIndex) {
+            index = lastFocusedIndex;
+        } else {
+            for (let i = displayTasks.length - 1; i >= 0; --i) {
+                if (!displayTasks[i].postponed) {
+                    index = i;
+                    break;
+                }
             }
         }
         const task = taskActions.add(index + 1);
