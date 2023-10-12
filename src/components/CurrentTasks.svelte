@@ -204,11 +204,6 @@
         }
     }
 
-    function hideSearch() {
-        showSearchInput = false;
-        searchPhrase = "";
-    }
-
     async function toggleShowDeletePanel() {
         showDeletePanel = !showDeletePanel;
     }
@@ -1088,7 +1083,6 @@
             <input type="text" id="searchInput"
                    bind:value="{searchPhrase}"
                    bind:this="{searchInputRef}"
-                   on:blur="{hideSearch}"
             />
         {:else}
             <span id="filterPane">
