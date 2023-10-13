@@ -64,7 +64,7 @@
         >
             <Fa icon="{faBars}"/>
         </button>
-        {#if task.title !== "" && !task.postponed && task.todoistTaskId}
+        {#if task.title !== "" && task.todoistTaskId}
             <button tabindex="-1" use:doubleclicker
                     class:emptyTimer="{!hasTimer}"
                     on:singleclick="{() => actions.startTimer(task)}"
