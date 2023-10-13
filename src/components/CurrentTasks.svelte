@@ -41,7 +41,7 @@
             return true;
         }
         if (searchPhrase) {
-            return task.title.includes(searchPhrase);
+            return task.title.toLowerCase().includes(searchPhrase.toLowerCase());
         }
         switch (filterBy) {
             case "active":
