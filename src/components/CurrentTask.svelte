@@ -16,6 +16,7 @@
     import Button from "./Button.svelte";
     import {faLocationDot} from "@fortawesome/free-solid-svg-icons/faLocationDot";
     import {faCirclePlay} from "@fortawesome/free-regular-svg-icons/faCirclePlay";
+    import {doubleclicker} from "../lib/actions";
 
     export let task: Task;
     export let index: number;
@@ -23,6 +24,7 @@
     export let refTitle: HTMLInputElement;
     export let actions;
     export let isDragging: boolean;
+    export let hasTimer: boolean;
 
 </script>
 
@@ -62,12 +64,11 @@
         >
             <Fa icon="{faBars}"/>
         </button>
-        {#if task.title !== "" && !task.postponed}
-            <button on:click="{() => actions.play(task)}"
-                    tabindex="-1"
-                    class="play"
-                    class:playUnknown="{true}"
-                    class:playKnown="{false}"
+        {#if task.title !== "" && !task.postponed && task.todoistTaskId}
+            <button tabindex="-1" use:doubleclicker
+                    class:emptyTimer="{!hasTimer}"
+                    on:singleclick="{() => actions.startTimer(task)}"
+                    on:doubleclick="{() => actions.forgetTimer(task)}"
             >
                 <Fa icon="{faCirclePlay}"/>
             </button>
@@ -280,14 +281,8 @@
         grid-template-columns: repeat(5, 1fr);
     }
 
-    .play {
-    }
-
-    .play.playUnknown {
+    .emptyTimer {
         opacity: 0.5;
-    }
-
-    .play.playKnown {
     }
 
     .additionalActions {

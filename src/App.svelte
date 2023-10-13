@@ -7,6 +7,8 @@
 
     let currentTasks: Array<Task> = [];
     let currentTasksTimestamp: number = 0;
+    let timerURLs = {};
+    let timerURLsTimestamp: number = 0;
     let ignoreNextCurrentTasksUpdate: boolean = false;
     let lastUpdateTimestamp: number = 0;
     let storageError: string = null;
@@ -94,8 +96,57 @@
         saveServerCurrentTasks(tasks, timestamp, currentTasksTimestamp);
     }
 
+    async function loadTimerURLs() {
+        let json;
+        try {
+            json = await storage.get("timer_urls");
+        } catch (e) {
+            storageError = e.toString();
+            console.error(e);
+            return;
+        }
+        if (json.ok) {
+            timerURLs = json.data;
+            timerURLsTimestamp = json.timestamp;
+        }
+    }
+
+    async function saveTimerURLs() {
+        const timestamp = (new Date()).getTime();
+        storageError = null;
+        let json;
+        try {
+            json = await storage.set("timer_urls", timestamp, timerURLsTimestamp, timerURLs);
+        } catch (e) {
+            storageError = e.toString();
+            console.error(e);
+            return;
+        }
+        if (json.ok) {
+            timerURLsTimestamp = timestamp;
+        } else {
+            timerURLs = json.data;
+            timerURLsTimestamp = json.timestamp;
+            alert("Server has newer timer URLs data");
+        }
+        console.debug("server: saved");
+    }
+
+    function saveTimerURL(todoistTaskId, url) {
+        if (url) {
+            timerURLs[todoistTaskId] = url;
+        } else {
+            if (!timerURLs[todoistTaskId]) {
+                return;
+            }
+            delete timerURLs[todoistTaskId];
+        }
+        saveTimerURLs();
+    }
+
     loadLocalCurrentTasks();
     loadServerCurrentTasks();
+    loadTimerURLs();
 
     function onWindowFocus() {
         console.debug("window: focus");
@@ -121,8 +172,10 @@
     {/if}
     <CurrentTasks
             bind:ignoreNextTasksUpdate="{ignoreNextCurrentTasksUpdate}"
-            save="{saveCurrentTasks}"
+            saveTasks="{saveCurrentTasks}"
+            saveTimerURL="{saveTimerURL}"
             tasks="{currentTasks}"
+            timerURLs="{timerURLs}"
     ></CurrentTasks>
 </main>
 

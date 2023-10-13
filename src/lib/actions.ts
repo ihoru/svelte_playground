@@ -35,3 +35,29 @@ export function longpress(node: Node, threshold: number = 300) {
         },
     };
 }
+
+export function doubleclicker(node: Node, threshold: number = 300) {
+    let timeout: number;
+
+    function onClick() {
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+            node.dispatchEvent(new CustomEvent("doubleclick"));
+            return;
+        }
+
+        timeout = setTimeout(() => {
+            timeout = null;
+            node.dispatchEvent(new CustomEvent("singleclick"));
+        }, threshold);
+    }
+
+    node.addEventListener("click", onClick);
+
+    return {
+        destroy() {
+            node.removeEventListener("click", onClick);
+        },
+    };
+}

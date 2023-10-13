@@ -26,8 +26,11 @@
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
-    export let save: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
-    export let filterBy = localStorage.getItem("filterBy") || "all";
+    export let saveTasks: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
+    export let timerURLs = {};
+    export let saveTimerURL: (todoistTaskId, url) => void = (todoistTaskId, url) => null;
+
+    let filterBy = localStorage.getItem("filterBy") || "all";
 
     $: {
         localStorage.setItem("filterBy", filterBy);
@@ -71,14 +74,14 @@
             clearTimeout(saveTimeout);
         }
         saveTimeout = setTimeout(() => {
-            save(tasks);
+            saveTasks(tasks);
         }, 2000);
     }
 
     function saveIfDebounced() {
         if (saveTimeout) {
             clearTimeout(saveTimeout);
-            save(tasks);
+            saveTasks(tasks);
         }
     }
 
@@ -692,8 +695,20 @@
             tasks = tasks;
         },
 
-        play(task: Task) {
+        startTimer(task: Task) {
+            let url = timerURLs[task.todoistTaskId];
+            if (!url) {
+                url = prompt("Provide URL:");
+                if (url) {
+                    saveTimerURL(task.todoistTaskId, url);
+                }
+                return;
+            }
+            window.open(url);
+        },
 
+        forgetTimer(task: Task) {
+            saveTimerURL(task.todoistTaskId, null);
         },
 
         async postpone(task: Task, dt: Date) {
@@ -1180,6 +1195,7 @@
                             bind:refDuration="{taskDurationRefs[task.id]}"
                             bind:refTitle="{taskTitleRefs[task.id]}"
                             isDragging="{draggingTaskId === task.id}"
+                            hasTimer="{timerURLs[task.todoistTaskId]}"
                             {index}
                             {task}
                     />
