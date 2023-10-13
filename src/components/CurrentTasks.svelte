@@ -29,7 +29,6 @@
 
     $: {
         localStorage.setItem("filterBy", filterBy);
-        resetLastMoveTopMemory();
         resetRecentlyChanged();
     }
     $: displayTasks = tasks.filter((task: Task) => {
@@ -199,9 +198,10 @@
     let searchPhrase = "";
     let searchInputRef: HTMLInputElement;
 
-    async function toggleSearch() {
+    async function toggleSearchPanel() {
         showSearchInput = !showSearchInput;
         if (showSearchInput) {
+            resetRecentlyChanged();
             await tick();
             searchInputRef.focus();
         } else {
@@ -1085,7 +1085,7 @@
         </div>
     {/if}
     <div>
-        <button id="searchBtn" on:click="{toggleSearch}" tabindex="-1">
+        <button id="searchBtn" on:click="{toggleSearchPanel}" tabindex="-1">
             <Fa icon="{faSearch}"/>
         </button>
         {#if showSearchInput}
