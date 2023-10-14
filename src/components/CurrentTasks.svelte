@@ -54,7 +54,29 @@
                 return true;
         }
         throw new Error(`Unknown value filterBy=${filterBy}`);
+    }).sort(function (taskA: Task, taskB: Task) {
+        if (filterBy !== "done") {
+            return 0;
+        }
+        if (!taskA.done && taskB.done) {
+            return 1;
+        }
+        if (taskA.done && !taskB.done) {
+            return -1;
+        }
+        if (taskA.done && taskB.done) {
+            return taskA.finishTime < taskB.finishTime ? -1 : 0;
+        }
+        return 0;
     });
+
+    function checkFilterDone() {
+        if (filterBy === "done") {
+            alert("Can't reorder tasks while filtering by done");
+            return true;
+        }
+        return false;
+    }
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
@@ -763,6 +785,9 @@
         },
 
         moveUp(task: Task, size = 1) {
+            if (checkFilterDone()) {
+                return;
+            }
             const displayIndex = findVisibleTaskIndex(task.id);
             if (displayIndex === 0) {
                 return;
@@ -776,6 +801,9 @@
         },
 
         moveDown(task: Task, size = 1) {
+            if (checkFilterDone()) {
+                return;
+            }
             const displayIndex = findVisibleTaskIndex(task.id);
             if (displayIndex + 1 === displayTasks.length) {
                 return;
@@ -789,6 +817,9 @@
         },
 
         moveAfterFocused(task: Task) {
+            if (checkFilterDone()) {
+                return;
+            }
             if (!lastFocusedTaskId) {
                 alert("Focus in any task first");
                 return;
@@ -802,6 +833,9 @@
         },
 
         moveTop(task: Task) {
+            if (checkFilterDone()) {
+                return;
+            }
             const displayIndex = findVisibleTaskIndex(task.id);
             if (displayIndex === 0) {
                 return;
@@ -829,6 +863,9 @@
         },
 
         moveBottom(task: Task) {
+            if (checkFilterDone()) {
+                return;
+            }
             const displayIndex = findVisibleTaskIndex(task.id);
             if (displayIndex + 1 === tasks.length) {
                 return;
@@ -999,6 +1036,10 @@
 
         dragStart(event) {
             console.debug("start", event);
+            if (checkFilterDone()) {
+                event.preventDefault();
+                return;
+            }
             const taskId = event.target.dataset.taskId;
             const task = findTask(taskId);
             event.dataTransfer.setDragImage(new Image(), 0, 0);

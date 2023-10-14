@@ -129,6 +129,7 @@
            on:keydown="{(event) => actions.inputKeyDown(task, event, refDuration)}"
            on:keyup="{(event) => actions.inputKeyUp(task, event, refDuration)}"
            on:paste="{(event) => actions.paste(task, event)}"
+           readonly="{task.done}"
            tabindex="{task.done ? -1 : 0}"
            type="number"
     />
@@ -156,6 +157,7 @@
            on:keydown="{(event) => actions.inputKeyDown(task, event, refTitle)}"
            on:keyup="{(event) => actions.inputKeyUp(task, event, refTitle)}"
            on:paste="{(event) => actions.paste(task, event)}"
+           readonly="{task.done}"
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">
