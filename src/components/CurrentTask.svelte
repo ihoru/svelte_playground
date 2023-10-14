@@ -94,7 +94,7 @@
                 </button>
             {/if}
         {:else if task.todoistTaskId && !task.done && !task.postponed}
-            <Button class="postpone"
+            <Button
                     on:singleclick="{() => actions.postponeTomorrow(task)}"
                     on:doubleclick="{() => actions.postponeSaturday(task)}"
                     on:tripleclick="{() => actions.postponeSunday(task)}"
@@ -199,13 +199,13 @@
         align-items: center;
         display: grid;
         grid-template-columns:
-            1.4rem
-            3.5rem
-            7.5rem
-            2rem
-            0.8rem
-            minmax(11rem, auto)
-            6.5rem;
+            1.4rem              /* .number */
+            3.5rem              /* .time */
+            7.5rem                /* .mainActions */
+            2rem                /* .duration */
+            0.8rem              /* .priority */
+            minmax(10rem, auto)  /* .title */
+            6.5rem /* .additionalActions */;
         font-family: monospace;
         width: 100%;
         height: 1.7rem;
@@ -313,6 +313,12 @@
         color: #d1453b;
     }
 
+    .task :global(button) {
+        background-color: transparent;
+        border-style: none;
+        padding: 0;
+    }
+
     /*
     * Hide number input arrows
     */
@@ -325,6 +331,12 @@
     input[type=number] {
         /* Firefox */
         -moz-appearance: textfield;
+    }
+
+    @media all and (max-width: 500px) {
+        .additionalActions {
+            display: none;
+        }
     }
 
 </style>

@@ -1,16 +1,13 @@
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
 body {
     font-size: 15px;
     padding: 0.5rem 0;
     touch-action: manipulation;
     user-select: none;
+    margin: 0;
+}
+
+hr {
+    margin: 0;
 }
 
 input,
@@ -39,9 +36,12 @@ input {
 
 button {
     cursor: pointer;
+    border: 1px solid #999;
+    border-radius: .5rem;
 }
 
 button:disabled {
+    border: 1px solid #ccc;
     cursor: not-allowed;
 }
 

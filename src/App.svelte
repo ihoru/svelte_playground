@@ -4,11 +4,14 @@
     import "reflect-metadata";
     import {plainToInstance} from "class-transformer";
     import * as storage from "./lib/storage";
+    import TTFavorite from "./models/TTFavorite";
 
     let currentTasks: Array<Task> = [];
     let currentTasksTimestamp: number = 0;
     let timerURLs = {};
     let timerURLsTimestamp: number = 0;
+    let togglTrackFavorites = [];
+    let togglTrackFavoritesTimestamp: number = 0;
     let ignoreNextCurrentTasksUpdate: boolean = false;
     let lastUpdateTimestamp: number = 0;
     let storageError: string = null;
@@ -129,7 +132,6 @@
             timerURLsTimestamp = json.timestamp;
             alert("Server has newer timer URLs data");
         }
-        console.debug("server: saved");
     }
 
     function saveTimerURL(todoistTaskId, url) {
@@ -144,9 +146,49 @@
         saveTimerURLs();
     }
 
+    async function loadTogglTrackFavorites() {
+        let json;
+        try {
+            json = await storage.get("toggle_track_favorites");
+        } catch (e) {
+            storageError = e.toString();
+            console.error(e);
+            return;
+        }
+        if (json.ok) {
+            applyTogglTrackFavorites(json);
+        }
+    }
+
+    async function saveTogglTrackFavorites() {
+        togglTrackFavorites = togglTrackFavorites.sort((a, b) => a.order - b.order);
+        const timestamp = (new Date()).getTime();
+        storageError = null;
+        let json;
+        try {
+            json = await storage.set("toggle_track_favorites", timestamp, togglTrackFavoritesTimestamp, togglTrackFavorites);
+        } catch (e) {
+            storageError = e.toString();
+            console.error(e);
+            return;
+        }
+        if (json.ok) {
+            togglTrackFavoritesTimestamp = timestamp;
+        } else {
+            applyTogglTrackFavorites(json);
+            alert("Server has newer Toggl Track Favorites data");
+        }
+    }
+
+    function applyTogglTrackFavorites(json) {
+        togglTrackFavorites = plainToInstance<TTFavorite, Array<object>>(TTFavorite, json.data);
+        togglTrackFavoritesTimestamp = json.timestamp;
+    }
+
     loadLocalCurrentTasks();
     loadServerCurrentTasks();
     loadTimerURLs();
+    loadTogglTrackFavorites();
 
     function onWindowFocus() {
         console.debug("window: focus");
@@ -173,9 +215,11 @@
     <CurrentTasks
             bind:ignoreNextTasksUpdate="{ignoreNextCurrentTasksUpdate}"
             saveTasks="{saveCurrentTasks}"
-            saveTimerURL="{saveTimerURL}"
+            {saveTimerURL}
+            {saveTogglTrackFavorites}
             tasks="{currentTasks}"
-            timerURLs="{timerURLs}"
+            {timerURLs}
+            {togglTrackFavorites}
     ></CurrentTasks>
 </main>
 

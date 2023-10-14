@@ -23,12 +23,21 @@
     import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
     import {faBroom} from "@fortawesome/free-solid-svg-icons/faBroom";
     import {faArrowDownAZ} from "@fortawesome/free-solid-svg-icons/faArrowDownAZ";
+    import {faHeart} from "@fortawesome/free-regular-svg-icons/faHeart";
+    import Modal from "./Modal.svelte";
+    import TTFavorite from "../models/TTFavorite";
+    import ShowTTFavorite from "./ShowTTFavorite.svelte";
+    import {faSave} from "@fortawesome/free-regular-svg-icons/faSave";
+    import {faEdit} from "@fortawesome/free-regular-svg-icons/faEdit";
+    import EditTTFavorite from "./EditTTFavorite.svelte";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
     export let saveTasks: (tasks: Array<Task>) => void = (tasks: Array<Task>) => null;
     export let timerURLs = {};
     export let saveTimerURL: (todoistTaskId, url) => void = (todoistTaskId, url) => null;
+    export let togglTrackFavorites: Array<TTFavorite> = [];
+    export let saveTogglTrackFavorites: () => void = () => null;
 
     let filterBy = localStorage.getItem("filterBy") || "all";
 
@@ -69,6 +78,7 @@
         }
         return 0;
     });
+    $: tasks && tasksUpdated();
 
     function checkFilterDone() {
         if (filterBy === "done") {
@@ -222,6 +232,28 @@
         taskTitleRefs[task.id].focus();
     }
 
+    let showTogglTrackFavoritesModal = false;
+    let editingTogglTrackFavorites = false;
+
+    function showTogglTrackFavorites() {
+        showTogglTrackFavoritesModal = true;
+    }
+
+    function toggleEditingTogglTrackFavorites() {
+        editingTogglTrackFavorites = !editingTogglTrackFavorites;
+    }
+
+    function addTogglTrackFavorite() {
+        let maxOrder = 0;
+        for (const togglTrackFavorite: TTFavorite of togglTrackFavorites) {
+            maxOrder = Math.max(maxOrder, togglTrackFavorite.order);
+        }
+        maxOrder += 10;
+        togglTrackFavorites.push(new TTFavorite(maxOrder));
+        togglTrackFavorites = togglTrackFavorites;
+        editingTogglTrackFavorites = true;
+    }
+
     let showSearchInput = false;
     let searchPhrase = "";
     let searchInputRef: HTMLInputElement;
@@ -363,7 +395,7 @@
                 if (firstWithDuration) {
                     console.error("Seems like Todoist has fixed the bug! 🍾🍾🍾");
                 } else {
-                    // probably, there should be tasks with duration set, so to check that, let's requests tasks by ids
+                    // probably, there should be tasks with duration set, so to check that, let's request tasks by ids
                     // it works correctly in Todoist in this case
                     const ids = todoistTasks.map((todoistTask: TodoistTask) => todoistTask.id);
                     todoistTasks = await todoistAPI.getTasksByIds(ids);
@@ -1105,7 +1137,6 @@
         },
     };
 
-    $: tasks && tasksUpdated();
 </script>
 
 <svelte:document on:keyup="{appKeyUp}"></svelte:document>
@@ -1115,7 +1146,12 @@
 ></svelte:window>
 
 <div class="panel top">
-    <div>
+    <div class="main">
+        <button on:click="{showTogglTrackFavorites}"
+                tabindex="-1"
+        >
+            <Fa icon="{faHeart}"/>
+        </button>
         <button on:click="{addTaskToTheEnd}" tabindex="-1">
             <Fa icon="{faAdd}"/>
         </button>
@@ -1126,31 +1162,29 @@
                 on:click="{resetRecentlyChanged}"
                 tabindex="-1"
         >
-            &nbsp;&nbsp;&nbsp;<Fa icon="{faEraser}"/>&nbsp;&nbsp;&nbsp;
+            <Fa icon="{faEraser}"/>
         </button>
         <button disabled="{brooming}"
                 on:click="{broomTheDay}"
                 tabindex="-1"
         >
-            &nbsp;<Fa icon="{faBroom}"/>&nbsp;
+            <Fa icon="{faBroom}"/>
         </button>
         {#if todoistAPI}
             <button disabled="{loading}" on:click="{fetchTodoistTasks}"
                     tabindex="-1"
             >
                 <Fa icon="{faDownload}"/>
-                Todoist
             </button>
             <button disabled="{loading}" on:click="{uploadTodoistTasks}"
                     tabindex="-1"
             >
                 <Fa icon="{faUpload}"/>
-                Save
             </button>
         {/if}
     </div>
     {#if showDeletePanel}
-        <div>
+        <div class="delete">
             Delete:
             <button on:click="{deleteAllTasks}" tabindex="-1">
                 all
@@ -1265,6 +1299,40 @@
     {/if}
 </div>
 
+<Modal bind:showModal="{showTogglTrackFavoritesModal}">
+    <h2 slot="header">
+        Favorite Toggl Track timers
+    </h2>
+
+    <div class="togglTrackFavorites">
+        {#each togglTrackFavorites as tTFavorite, index (tTFavorite.id)}
+            <svelte:component
+                    this={editingTogglTrackFavorites ? EditTTFavorite : ShowTTFavorite}
+                    {index}
+                    bind:item="{tTFavorite}"
+                    deleteItem="{() => togglTrackFavorites.splice(index, 1)}"
+            />
+        {/each}
+    </div>
+    <div class="togglTrackFavoritesActions">
+        <button on:click="{addTogglTrackFavorite}">
+            <Fa icon="{faAdd}"/>
+            Add
+        </button>
+        {#if editingTogglTrackFavorites}
+            <button on:click="{() => {toggleEditingTogglTrackFavorites(); saveTogglTrackFavorites();}}">
+                <Fa icon="{faSave}"/>
+                Save
+            </button>
+        {:else}
+            <button on:click="{toggleEditingTogglTrackFavorites}">
+                <Fa icon="{faEdit}"/>
+                Edit
+            </button>
+        {/if}
+    </div>
+</Modal>
+
 <style>
     .panel {
         text-align: center;
@@ -1272,6 +1340,15 @@
 
     .panel button {
         padding: .2rem .3rem;
+    }
+
+    .panel .main button {
+        padding: .5rem .5rem;
+        min-width: 2.5rem;
+    }
+
+    .panel .delete button {
+        margin-bottom: .3rem;
     }
 
     .panel > div:not(:first-child) {
@@ -1310,10 +1387,6 @@
         text-align: center;
     }
 
-    .current {
-        width: 100%;
-    }
-
     .dropZoneHolder {
         position: relative;
     }
@@ -1338,9 +1411,17 @@
         border-top: 1px solid gray;
     }
 
-    .current :global(button) {
-        background-color: transparent;
-        border-style: none;
+    .togglTrackFavorites {
+        overflow-y: auto;
+        max-height: 65vh;
     }
 
+    .togglTrackFavoritesActions {
+        text-align: center;
+    }
+
+    .togglTrackFavoritesActions button {
+        padding: 0.5rem 1rem;
+        margin: 0.5rem auto 0 auto;
+    }
 </style>
