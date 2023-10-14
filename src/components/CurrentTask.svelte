@@ -199,7 +199,7 @@
         grid-template-columns:
             1.4rem
             3.5rem
-            6.5rem
+            7.5rem
             2rem
             0.8rem
             minmax(11rem, auto)
