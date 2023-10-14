@@ -23,10 +23,10 @@
             on:click="{open}"
     >
         <Fa icon="{faPlay}"/>
+        <span>
+            {item.title}
+        </span>
     </button>
-    <span>
-        {item.title}
-    </span>
 </div>
 
 <style>
@@ -42,6 +42,10 @@
         border-style: none;
         background: transparent;
         padding: 0.5rem 1rem;
+    }
+
+    span {
+        margin-left: 0.5rem;
     }
 
 </style>
