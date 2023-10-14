@@ -41,6 +41,7 @@
     button {
         border-style: none;
         background: transparent;
+        padding: 0.5rem 1rem;
     }
 
 </style>

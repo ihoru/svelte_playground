@@ -254,6 +254,11 @@
         editingTogglTrackFavorites = true;
     }
 
+    function deleteTogglTrackFavorite(index) {
+        togglTrackFavorites.splice(index, 1);
+        togglTrackFavorites = togglTrackFavorites;
+    }
+
     let showSearchInput = false;
     let searchPhrase = "";
     let searchInputRef: HTMLInputElement;
@@ -1304,13 +1309,14 @@
         Favorite Toggl Track timers
     </h2>
 
-    <div class="togglTrackFavorites">
+    <div class="togglTrackFavorites"
+         class:columns="{!editingTogglTrackFavorites}">
         {#each togglTrackFavorites as tTFavorite, index (tTFavorite.id)}
             <svelte:component
                     this={editingTogglTrackFavorites ? EditTTFavorite : ShowTTFavorite}
                     {index}
                     bind:item="{tTFavorite}"
-                    deleteItem="{() => togglTrackFavorites.splice(index, 1)}"
+                    deleteItem="{() => deleteTogglTrackFavorite(index)}"
             />
         {/each}
     </div>
@@ -1412,8 +1418,12 @@
     }
 
     .togglTrackFavorites {
+        max-height: 80vmin;
         overflow-y: auto;
-        max-height: 65vh;
+    }
+
+    .togglTrackFavorites.columns {
+        column-count: 2;
     }
 
     .togglTrackFavoritesActions {
