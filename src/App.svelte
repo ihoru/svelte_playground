@@ -8,7 +8,7 @@
 
     let currentTasks: Array<Task> = [];
     let currentTasksTimestamp: number = 0;
-    let timerURLs = {};
+    let timerURLs: Object<string, string> = {};
     let timerURLsTimestamp: number = 0;
     let togglTrackFavorites: Array<TTFavorite> = [];
     let togglTrackFavoritesTimestamp: number = 0;
@@ -18,7 +18,7 @@
 
     function loadLocalCurrentTasks() {
         // console.log("local: load");
-        currentTasksTimestamp = parseInt(localStorage.getItem("timestamp")) || 0;
+        currentTasksTimestamp = parseInt(localStorage.getItem("tasks_timestamp")) || 0;
         let data = localStorage.getItem("tasks") || "[]";
         try {
             data = JSON.parse(data);
@@ -31,7 +31,7 @@
     function saveLocalCurrentTasks(tasks: Array<Task>, timestamp: number) {
         // console.log("local: save");
         localStorage.setItem("tasks", JSON.stringify(tasks));
-        localStorage.setItem("timestamp", timestamp);
+        localStorage.setItem("tasks_timestamp", timestamp);
     }
 
     async function loadServerCurrentTasks() {
@@ -108,6 +108,23 @@
         saveServerCurrentTasks(tasks, timestamp, currentTasksTimestamp);
     }
 
+    function loadLocalTimerURLs() {
+        // console.log("local: load");
+        timerURLsTimestamp = parseInt(localStorage.getItem("timer_urls_timestamp")) || 0;
+        let data = localStorage.getItem("timer_urls") || "[]";
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+        }
+        timerURLs = plainToInstance<TTFavorite, Array<object>>(TTFavorite, data);
+    }
+
+    function saveLocalTimerURLs() {
+        // console.log("local: save");
+        localStorage.setItem("timer_urls", JSON.stringify(timerURLs));
+        localStorage.setItem("timer_urls_timestamp", timerURLsTimestamp);
+    }
+
     async function loadTimerURLs() {
         let json;
         try {
@@ -152,6 +169,7 @@
             }
             delete timerURLs[todoistTaskId];
         }
+        saveLocalTimerURLs();
         saveTimerURLs();
     }
 
@@ -202,6 +220,7 @@
 
     loadLocalCurrentTasks();
     loadServerCurrentTasks();
+    loadLocalTimerURLs();
     loadTimerURLs();
     loadTogglTrackFavorites();
 
