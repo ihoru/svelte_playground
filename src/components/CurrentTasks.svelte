@@ -40,6 +40,12 @@
     export let saveTogglTrackFavorites: () => void = () => null;
 
     let filterBy = localStorage.getItem("filterBy") || "all";
+    const FILTERS = Object.freeze({
+        ACTIVE: "active",
+        DONE: "done",
+        POSTPONED: "postponed",
+        ALL: "all",
+    });
 
     $: {
         localStorage.setItem("filterBy", filterBy);
@@ -53,35 +59,36 @@
             return task.title.toLowerCase().includes(searchPhrase.toLowerCase());
         }
         switch (filterBy) {
-            case "active":
+            case FILTERS.ACTIVE:
                 return !task.done && !task.postponed;
-            case "done":
+            case FILTERS.DONE:
                 return task.done;
-            case "postponed":
+            case FILTERS.POSTPONED:
                 return task.postponed;
-            case "all":
+            case FILTERS.ALL:
                 return true;
         }
         throw new Error(`Unknown value filterBy=${filterBy}`);
     }).sort(function (taskA: Task, taskB: Task) {
-        if (filterBy !== "done") {
+        if (filterBy === FILTERS.DONE) {
+            if (!taskA.done && taskB.done) {
+                return 1;
+            }
+            if (taskA.done && !taskB.done) {
+                return -1;
+            }
+            if (taskA.done && taskB.done) {
+                return taskA.finishTime < taskB.finishTime ? -1 : 0;
+            }
             return 0;
+        } else if (filterBy === FILTERS.POSTPONED) {
+            return taskA.title < taskB.title ? -1 : 0;
         }
-        if (!taskA.done && taskB.done) {
-            return 1;
-        }
-        if (taskA.done && !taskB.done) {
-            return -1;
-        }
-        if (taskA.done && taskB.done) {
-            return taskA.finishTime < taskB.finishTime ? -1 : 0;
-        }
-        return 0;
     });
     $: tasks && tasksUpdated();
 
     function checkFilterDone() {
-        if (filterBy === "done") {
+        if ([FILTERS.DONE, FILTERS.POSTPONED].includes(filterBy)) {
             alert("Can't reorder tasks while filtering by done");
             return true;
         }
@@ -1259,12 +1266,13 @@
             />
         {:else}
             <span id="filterPane">
-                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="all"/> all</label>
-                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="active"/> active</label>
-                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="done"/>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="{FILTERS.ALL}"/> all</label>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio"
+                              value="{FILTERS.ACTIVE}"/> active</label>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="{FILTERS.DONE}"/>
                     <Fa icon="{faCircleCheck}"/>
                 </label>
-                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="postponed"/>
+                <label><input bind:group="{filterBy}" name="filterBy" type="radio" value="{FILTERS.POSTPONED}"/>
                     <Fa icon="{faClock}"/>
                 </label>
             </span>
