@@ -113,6 +113,7 @@
     function saveIfDebounced() {
         if (saveTimeout) {
             clearTimeout(saveTimeout);
+            saveTimeout = null;
             saveTasks(tasks);
         }
     }
@@ -289,14 +290,20 @@
         if (!confirm("Delete postponed tasks?")) {
             return;
         }
-        tasks = tasks.filter((task: Task) => !task.postponed);
+        const newTasks = tasks.filter((task: Task) => !task.postponed);
+        if (newTasks.length !== tasks.length) {
+            tasks = newTasks;
+        }
     }
 
     function deleteDoneTasks() {
         if (!confirm("Delete done tasks?")) {
             return;
         }
-        tasks = tasks.filter((task: Task) => !task.done);
+        const newTasks = tasks.filter((task: Task) => !task.done);
+        if (newTasks.length !== tasks.length) {
+            tasks = newTasks;
+        }
     }
 
     async function deleteCompletelyDoneTasks(silent) {
@@ -319,7 +326,10 @@
             silent || alert("Nothing to delete");
             return;
         }
-        tasks = tasks.filter((task: Task) => !completedTaskIds.includes(task.todoistTaskId));
+        const newTasks = tasks.filter((task: Task) => !completedTaskIds.includes(task.todoistTaskId));
+        if (newTasks.length !== tasks.length) {
+            tasks = newTasks;
+        }
         silent || alert(`${diff} tasks deleted`);
     }
 
@@ -327,14 +337,20 @@
         if (!silent && !confirm("Delete manually added done tasks?")) {
             return;
         }
-        tasks = tasks.filter((task: Task) => task.todoistTaskId || !task.done);
+        const newTasks = tasks.filter((task: Task) => task.todoistTaskId || !task.done);
+        if (newTasks.length !== tasks.length) {
+            tasks = newTasks;
+        }
     }
 
     function deleteImportedTasks() {
         if (!confirm("Delete imported tasks?")) {
             return;
         }
-        tasks = tasks.filter((task: Task) => !task.todoistTaskId);
+        const newTasks = tasks.filter((task: Task) => !task.todoistTaskId);
+        if (newTasks.length !== tasks.length) {
+            tasks = newTasks;
+        }
     }
 
     async function deleteNonExistingImportedTasks(silent) {
@@ -353,7 +369,10 @@
             return;
         }
         const todoistTaskIds = todoistTasks.map((todoistTask: TodoistTask) => todoistTask.id);
-        tasks = tasks.filter((task: Task) => todoistTaskIds.includes(task.todoistTaskId));
+        const newTasks = tasks.filter((task: Task) => todoistTaskIds.includes(task.todoistTaskId));
+        if (newTasks.length !== tasks.length) {
+            tasks = newTasks;
+        }
         silent || alert(`${diff} tasks deleted`);
     }
 
@@ -383,13 +402,13 @@
             await deleteCompletelyDoneTasks(true);
             await deleteNonExistingImportedTasks(true);
             await transferDoneToPostponed();
-            await fetchTodoistTasks();
+            await fetchTodoistTasks(false);
         } finally {
             brooming = false;
         }
     }
 
-    async function fetchTodoistTasks() {
+    async function fetchTodoistTasks(updateRecentlyChanged = true) {
         resetRecentlyChanged();
         loading = true;
         let todoistTasks;
@@ -466,13 +485,17 @@
                         existingTask.duration = duration;
                     }
                     existingTask.todoistPriority = todoistPriority;
-                    existingTask.recentlyChanged = true;
+                    if (updateRecentlyChanged) {
+                        existingTask.recentlyChanged = true;
+                    }
                     taskUpdated = true;
                 }
                 return;
             }
             const task = new Task(title, duration, todoistTaskId, todoistPriority);
-            task.recentlyChanged = true;
+            if (updateRecentlyChanged) {
+                task.recentlyChanged = true;
+            }
             return task;
         }).filter(Boolean);
         for (let i = 0; i < tasks.length; ++i) {
@@ -482,7 +505,9 @@
             }
             if (!task.postponed && !task.done && !taskIds.includes(task.todoistTaskId)) {
                 task.postponed = "?";
-                task.recentlyChanged = true;
+                if (updateRecentlyChanged) {
+                    task.recentlyChanged = true;
+                }
                 taskUpdated = true;
             }
         }
@@ -495,7 +520,9 @@
         }
         if (tasksToAdd.length || taskUpdated) {
             tasks = tasks;
-            setRecentlyChangedTimeout();
+            if (updateRecentlyChanged) {
+                setRecentlyChangedTimeout();
+            }
         }
         const retrievePostponeDateTodoistTaskIds = tasks.filter(t => t.postponed === "?").map(t => t.todoistTaskId);
         await retrievePostponeDates(retrievePostponeDateTodoistTaskIds);
@@ -1152,72 +1179,77 @@
 
 <div class="panel top">
     <div class="main">
-        <button on:click="{showTogglTrackFavorites}"
-                tabindex="-1"
-        >
+        <button disabled="{brooming}" on:click="{showTogglTrackFavorites}"
+                tabindex="-1">
             <Fa icon="{faHeart}"/>
         </button>
-        <button on:click="{addTaskToTheEnd}" tabindex="-1">
+        <button disabled="{brooming}" on:click="{addTaskToTheEnd}"
+                tabindex="-1">
             <Fa icon="{faAdd}"/>
         </button>
-        <button on:click="{toggleShowDeletePanel}" tabindex="-1">
+        <button disabled="{brooming}" on:click="{toggleShowDeletePanel}"
+                tabindex="-1">
             <Fa icon="{faXmark}"/>
         </button>
-        <button disabled="{!recentlyChangedTimeout}"
-                on:click="{resetRecentlyChanged}"
-                tabindex="-1"
-        >
+        <button disabled="{!recentlyChangedTimeout}" on:click="{resetRecentlyChanged}"
+                tabindex="-1">
             <Fa icon="{faEraser}"/>
         </button>
-        <button disabled="{brooming}"
-                on:click="{broomTheDay}"
-                tabindex="-1"
-        >
+        <button disabled="{brooming}" on:click="{broomTheDay}"
+                tabindex="-1">
             <Fa icon="{faBroom}"/>
         </button>
         {#if todoistAPI}
-            <button disabled="{loading}" on:click="{fetchTodoistTasks}"
+            <button disabled="{loading || brooming}" on:click="{fetchTodoistTasks}"
                     tabindex="-1"
             >
                 <Fa icon="{faDownload}"/>
             </button>
-            <button disabled="{loading}" on:click="{uploadTodoistTasks}"
+            <button disabled="{loading || brooming}" on:click="{uploadTodoistTasks}"
                     tabindex="-1"
             >
                 <Fa icon="{faUpload}"/>
             </button>
         {/if}
     </div>
-    {#if showDeletePanel}
+    {#if showDeletePanel && !brooming}
         <div class="delete">
             Delete:
-            <button on:click="{deleteAllTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deleteAllTasks()}">
                 all
             </button>
-            <button on:click="{deleteDoneTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deleteDoneTasks()}">
                 <Fa icon="{faCircleCheck}"/>
             </button>
-            <button on:click="{deletePostponedTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deletePostponedTasks()}">
                 <Fa icon="{faClock}"/>
             </button>
-            <button on:click="{deleteCompletelyDoneTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deleteCompletelyDoneTasks()}">
                 completely
                 <Fa icon="{faCircleCheck}"/>
             </button>
-            <button on:click="{deleteInternalDoneTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deleteInternalDoneTasks()}">
                 internal
                 <Fa icon="{faCircleCheck}"/>
             </button>
-            <button on:click="{deleteImportedTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deleteImportedTasks()}">
                 imported
             </button>
-            <button on:click="{deleteNonExistingImportedTasks}" tabindex="-1">
+            <button tabindex="-1"
+                    on:click="{() => deleteNonExistingImportedTasks()}">
                 imported deleted
             </button>
         </div>
     {/if}
     <div>
-        <button id="searchBtn" on:click="{toggleSearchPanel}" tabindex="-1">
+        <button id="searchBtn" on:click="{toggleSearchPanel}"
+                tabindex="-1">
             <Fa icon="{faSearch}"/>
         </button>
         {#if showSearchInput}
@@ -1238,10 +1270,9 @@
             </span>
         {/if}
         {#if false}
-            <button disabled="{filterBy !== 'all'}"
-                    on:click="{() => tasksReorder()}"
-                    tabindex="-1"
-            >
+            <button tabindex="-1"
+                    disabled="{filterBy !== 'all'}"
+                    on:click="{() => tasksReorder()}">
                 <Fa icon="{faArrowDownAZ}"/>
                 Sort
             </button>

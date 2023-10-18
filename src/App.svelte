@@ -83,11 +83,17 @@
     function saveCurrentTasks(tasks: Array<Task>) {
         console.info("! saveCurrentTasks");
         const timestamp = (new Date()).getTime();
-        tasks = JSON.parse(JSON.stringify(tasks));
+        let changed = false;
+        // I don't remember, why did I write this code here:
+        // tasks = JSON.parse(JSON.stringify(tasks));
         const ids = new Set();
-        tasks = tasks.filter((task: Task) => {
+        const newTasks = tasks.filter((task: Task) => {
+            if (task.recentlyChanged) {
+                changed = true;
+            }
             task.recentlyChanged = false;
             if (ids.has(task.id)) {
+                changed = true;
                 // prevent saving duplicate elements (might happen during development)
                 console.error(`Task.id=${task.id} was duplicated!`, task);
                 return false;
@@ -95,6 +101,9 @@
             ids.add(task.id);
             return true;
         });
+        if (changed) {
+            tasks = newTasks;
+        }
         saveLocalCurrentTasks(tasks, timestamp);
         saveServerCurrentTasks(tasks, timestamp, currentTasksTimestamp);
     }
