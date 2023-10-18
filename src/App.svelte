@@ -10,7 +10,7 @@
     let currentTasksTimestamp: number = 0;
     let timerURLs = {};
     let timerURLsTimestamp: number = 0;
-    let togglTrackFavorites = [];
+    let togglTrackFavorites: Array<TTFavorite> = [];
     let togglTrackFavoritesTimestamp: number = 0;
     let ignoreNextCurrentTasksUpdate: boolean = false;
     let lastUpdateTimestamp: number = 0;
@@ -162,6 +162,12 @@
 
     async function saveTogglTrackFavorites() {
         togglTrackFavorites = togglTrackFavorites.sort((a, b) => a.order - b.order);
+        let order = 10;
+        for (const item of togglTrackFavorites) {
+            item.order = order;
+            order += 10;
+        }
+        togglTrackFavorites = togglTrackFavorites;
         const timestamp = (new Date()).getTime();
         storageError = null;
         let json;
