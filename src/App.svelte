@@ -137,6 +137,7 @@
         if (json.ok) {
             timerURLs = json.data;
             timerURLsTimestamp = json.timestamp;
+            saveLocalTimerURLs();
         }
     }
 
@@ -156,6 +157,7 @@
         } else {
             timerURLs = json.data;
             timerURLsTimestamp = json.timestamp;
+            saveLocalTimerURLs();
             alert("Server has newer timer URLs data");
         }
     }
@@ -169,7 +171,6 @@
             }
             delete timerURLs[todoistTaskId];
         }
-        saveLocalTimerURLs();
         saveTimerURLs();
     }
 
