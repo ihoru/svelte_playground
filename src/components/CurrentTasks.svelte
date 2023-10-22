@@ -102,7 +102,7 @@
     let showDeletePanel = false;
 
     const todoistAccessToken = import.meta.env.MY_TODOIST_ACCESS_TOKEN || "";
-    const todoistAPI = todoistAccessToken ? new TodoistAPI(todoistAccessToken) : null;
+    const todoistAPI: TodoistAPI = todoistAccessToken ? new TodoistAPI(todoistAccessToken) : null;
     let loading = false;
     let brooming = false;
 
@@ -1186,34 +1186,53 @@
 
 <div class="panel top">
     <div class="main">
-        <button disabled="{brooming}" on:click="{showTogglTrackFavorites}"
-                tabindex="-1">
+        <button
+                disabled="{brooming}"
+                on:click="{() => showTogglTrackFavorites()}"
+                tabindex="-1"
+        >
             <Fa icon="{faHeart}"/>
         </button>
-        <button disabled="{brooming}" on:click="{addTaskToTheEnd}"
-                tabindex="-1">
+        <button
+                disabled="{brooming}"
+                on:click="{() => addTaskToTheEnd()}"
+                tabindex="-1"
+        >
             <Fa icon="{faAdd}"/>
         </button>
-        <button disabled="{brooming}" on:click="{toggleShowDeletePanel}"
-                tabindex="-1">
+        <button
+                disabled="{brooming}"
+                on:click="{() => toggleShowDeletePanel()}"
+                tabindex="-1"
+        >
             <Fa icon="{faXmark}"/>
         </button>
-        <button disabled="{!recentlyChangedTimeout}" on:click="{resetRecentlyChanged}"
-                tabindex="-1">
+        <button
+                disabled="{!recentlyChangedTimeout}"
+                on:click="{() => resetRecentlyChanged()}"
+                tabindex="-1"
+        >
             <Fa icon="{faEraser}"/>
         </button>
-        <button disabled="{brooming}" on:click="{broomTheDay}"
-                tabindex="-1">
+        <button
+                disabled="{loading || brooming}"
+                on:click="{() => broomTheDay()}"
+                tabindex="-1"
+        >
             <Fa icon="{faBroom}"/>
         </button>
         {#if todoistAPI}
-            <button disabled="{loading || brooming}" on:click="{fetchTodoistTasks}"
+            <button
+                    disabled="{loading || brooming}"
                     tabindex="-1"
+                    on:click="{() => fetchTodoistTasks()}"
             >
                 <Fa icon="{faDownload}"/>
             </button>
-            <button disabled="{loading || brooming}" on:click="{uploadTodoistTasks}"
+            <button
+                    disabled="{loading || brooming}"
                     tabindex="-1"
+                    on:click="{uploadTodoistTasks}"
             >
                 <Fa icon="{faUpload}"/>
             </button>
@@ -1222,41 +1241,57 @@
     {#if showDeletePanel && !brooming}
         <div class="delete">
             Delete:
-            <button tabindex="-1"
+            <button
+                    tabindex="-1"
                     on:click="{() => deleteAllTasks()}">
                 all
             </button>
-            <button tabindex="-1"
-                    on:click="{() => deleteDoneTasks()}">
+            <button
+                    on:click="{() => deleteDoneTasks()}"
+                    tabindex="-1"
+            >
                 <Fa icon="{faCircleCheck}"/>
             </button>
-            <button tabindex="-1"
-                    on:click="{() => deletePostponedTasks()}">
+            <button
+                    tabindex="-1"
+                    on:click="{() => deletePostponedTasks()}"
+            >
                 <Fa icon="{faClock}"/>
             </button>
-            <button tabindex="-1"
-                    on:click="{() => deleteCompletelyDoneTasks()}">
+            <button
+                    tabindex="-1"
+                    on:click="{() => deleteCompletelyDoneTasks()}"
+            >
                 completely
                 <Fa icon="{faCircleCheck}"/>
             </button>
-            <button tabindex="-1"
-                    on:click="{() => deleteInternalDoneTasks()}">
+            <button
+                    tabindex="-1"
+                    on:click="{() => deleteInternalDoneTasks()}"
+            >
                 internal
                 <Fa icon="{faCircleCheck}"/>
             </button>
-            <button tabindex="-1"
-                    on:click="{() => deleteImportedTasks()}">
+            <button
+                    tabindex="-1"
+                    on:click="{() => deleteImportedTasks()}"
+            >
                 imported
             </button>
-            <button tabindex="-1"
-                    on:click="{() => deleteNonExistingImportedTasks()}">
+            <button
+                    tabindex="-1"
+                    on:click="{() => deleteNonExistingImportedTasks()}"
+            >
                 imported deleted
             </button>
         </div>
     {/if}
     <div>
-        <button id="searchBtn" on:click="{toggleSearchPanel}"
-                tabindex="-1">
+        <button
+                id="searchBtn"
+                on:click="{toggleSearchPanel}"
+                tabindex="-1"
+        >
             <Fa icon="{faSearch}"/>
         </button>
         {#if showSearchInput}
@@ -1278,9 +1313,11 @@
             </span>
         {/if}
         {#if false}
-            <button tabindex="-1"
+            <button
+                    tabindex="-1"
                     disabled="{filterBy !== 'all'}"
-                    on:click="{() => tasksReorder()}">
+                    on:click="{() => tasksReorder()}"
+            >
                 <Fa icon="{faArrowDownAZ}"/>
                 Sort
             </button>
@@ -1360,17 +1397,26 @@
         {/each}
     </div>
     <div class="togglTrackFavoritesActions">
-        <button on:click="{addTogglTrackFavorite}">
+        <button
+                on:click="{addTogglTrackFavorite}"
+        >
             <Fa icon="{faAdd}"/>
             Add
         </button>
         {#if editingTogglTrackFavorites}
-            <button on:click="{() => {toggleEditingTogglTrackFavorites(); saveTogglTrackFavorites();}}">
+            <button
+                    on:click="{() => {
+                        toggleEditingTogglTrackFavorites();
+                        saveTogglTrackFavorites();
+                    }}"
+            >
                 <Fa icon="{faSave}"/>
                 Save
             </button>
         {:else}
-            <button on:click="{toggleEditingTogglTrackFavorites}">
+            <button
+                    on:click="{toggleEditingTogglTrackFavorites}"
+            >
                 <Fa icon="{faEdit}"/>
                 Edit
             </button>

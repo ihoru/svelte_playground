@@ -1,4 +1,5 @@
-async function _fetch(path: string, body = null, params = null) {
+async function _fetch(path: string, body: any = null, params: object | null = null) {
+    // @ts-ignore
     let searchParams = params && Object.keys(params).length ? new URLSearchParams(params).toString() : "";
     if (searchParams) {
         searchParams = "?" + searchParams;
@@ -32,7 +33,7 @@ async function _fetch(path: string, body = null, params = null) {
     return json;
 }
 
-export function get(key: string, timestamp: number = null) {
+export function get(key: string, timestamp: number | null = null) {
     return _fetch(key, null, {timestamp});
 }
 

@@ -22,7 +22,6 @@
     />
     <input
             bind:value="{item.title}"
-            class="title"
             enterkeyhint="Next"
             type="text"
     />

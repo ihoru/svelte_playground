@@ -1,16 +1,18 @@
 export function longpress(node: Node, threshold: number = 300) {
-    let dt: Date;
+    let dt: Date | null = null;
 
-    const onMouseDown = (event: MouseEvent) => {
+    // @ts-ignore
+    const onMouseDown: EventListener = (event: MouseEvent) => {
         event.preventDefault();
         dt = new Date();
     };
-    const onMouseUp = (event: MouseEvent) => {
+    // @ts-ignore
+    const onMouseUp: EventListener = (event: MouseEvent) => {
         event.preventDefault();
         if (!dt) {
             return;
         }
-        const diff = (new Date()).getTime() - dt.getTime();
+        const diff = Date.now() - dt.getTime();
         if (diff >= threshold) {
             node.dispatchEvent(new CustomEvent("longpress"));
         } else {
@@ -37,7 +39,7 @@ export function longpress(node: Node, threshold: number = 300) {
 }
 
 export function doubleclicker(node: Node, threshold: number = 300) {
-    let timeout: number;
+    let timeout: number | null = null;
 
     function onClick() {
         if (timeout) {

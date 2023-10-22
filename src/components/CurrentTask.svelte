@@ -50,12 +50,14 @@
         {/if}
     </div>
     <div class="mainActions">
-        <button on:click="{() => actions.delete(task)}"
+        <button
+                on:click="{() => actions.delete(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faXmark}"/>
         </button>
-        <button class="dragHandle"
+        <button
+                class="dragHandle"
                 on:mousedown="{actions.dragHandleDown}"
                 on:mouseup="{actions.dragHandleUp}"
                 on:touchend|passive="{actions.dragHandleUp}"
@@ -65,7 +67,8 @@
             <Fa icon="{faBars}"/>
         </button>
         {#if task.title !== "" && task.todoistTaskId}
-            <button tabindex="-1" use:doubleclicker
+            <button
+                    tabindex="-1" use:doubleclicker
                     class:emptyTimer="{!hasTimer}"
                     on:singleclick="{() => actions.startTimer(task)}"
                     on:doubleclick="{() => actions.forgetTimer(task)}"
@@ -76,7 +79,8 @@
             <span></span>
         {/if}
         {#if task.postponed}
-            <button class="restore"
+            <button
+                    class="restore"
                     on:click="{() => actions.restore(task)}"
                     tabindex="-1"
             >
@@ -86,7 +90,8 @@
             {#if task.title === ""}
                 <span></span>
             {:else}
-                <button class="create"
+                <button
+                        class="create"
                         on:click="{() => actions.create(task)}"
                         tabindex="-1"
                 >
@@ -106,7 +111,8 @@
             <span></span>
         {/if}
         {#if task.title !== "" && !task.postponed}
-            <button on:click="{() => actions.toggle(task)}"
+            <button
+                    on:click="{() => actions.toggle(task)}"
                     tabindex="-1"
             >
                 {#if task.done}
@@ -161,31 +167,36 @@
            tabindex="{task.done ? -1 : 0}"
     />
     <div class="additionalActions">
-        <button class="afterFocused"
+        <button
+                class="afterFocused"
                 on:click="{() => actions.moveAfterFocused(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faLocationDot}"/>
         </button>
-        <button class="top"
+        <button
+                class="top"
                 on:click="{() => actions.moveTop(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faUpLong}"/>
         </button>
-        <button class="bottom"
+        <button
+                class="bottom"
                 on:click="{() => actions.moveBottom(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faDownLong}"/>
         </button>
-        <button class="up"
+        <button
+                class="up"
                 on:click="{() => actions.moveDown(task)}"
                 tabindex="-1"
         >
             <Fa icon="{faChevronDown}"/>
         </button>
-        <button class="up"
+        <button
+                class="up"
                 on:click="{() => actions.moveUp(task)}"
                 tabindex="-1"
         >

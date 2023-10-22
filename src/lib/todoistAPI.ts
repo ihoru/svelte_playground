@@ -75,15 +75,15 @@ export class TodoistAPI {
         return this._fetch(`tasks/${taskId}/reopen`, {method: "POST"});
     }
 
-    async postpone(taskId: string, dueDate: string, task: TodoistTask = null) {
+    async postpone(taskId: string, dueDate: string, task: TodoistTask | null = null) {
         if (!task) {
-            task = await this.getTask(taskId);
-            if (!task || !task.due || task.is_completed) {
-                return;
-            }
+            task = await this.getTask(taskId) as TodoistTask;
+        }
+        if (!task || !task.due || task.is_completed) {
+            return;
         }
         // get current data, to preserve "is_recurring" state and time
-        const payload = {};
+        const payload: any = {};
         if (task.due.is_recurring) {
             payload["due_string"] = task.due.string;
         }
@@ -99,7 +99,7 @@ export class TodoistAPI {
         return this._fetch(`tasks/${taskId}`, {body: payload});
     }
 
-    private async _fetch<T>(path: string, params = {}): Promise<T> {
+    private async _fetch<T>(path: string, params: any = {}): Promise<T> {
         const url = `https://api.todoist.com/rest/v2/${path}`;
         if (params["body"]) {
             params["body"] = JSON.stringify(params["body"]);
@@ -119,8 +119,8 @@ export class TodoistAPI {
     }
 
     private _sortTasks(a: TodoistTask, b: TodoistTask) {
-        const aDue = a.due.datetime ? new Date(a.due.datetime) : null;
-        const bDue = b.due.datetime ? new Date(b.due.datetime) : null;
+        const aDue = a.due!.datetime ? new Date(a.due!.datetime) : null;
+        const bDue = b.due!.datetime ? new Date(b.due!.datetime) : null;
         if ((aDue && !bDue) || (aDue && bDue && aDue < bDue)) {
             return -1;
         } else if ((bDue && !aDue) || (aDue && bDue && aDue > bDue)) {

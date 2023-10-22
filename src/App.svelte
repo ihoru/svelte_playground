@@ -64,7 +64,7 @@
         }
         if (json.ok) {
             currentTasksTimestamp = timestamp;
-            lastUpdateTimestamp = (new Date()).getTime();
+            lastUpdateTimestamp = Date.now();
         } else {
             applyCurrentTasksFromServer(json);
             alert("Server has newer data");
@@ -75,14 +75,14 @@
     function applyCurrentTasksFromServer(json: object) {
         ignoreNextCurrentTasksUpdate = true;
         currentTasksTimestamp = parseInt(json.timestamp) || 0;
-        lastUpdateTimestamp = (new Date()).getTime();
+        lastUpdateTimestamp = Date.now();
         currentTasks = plainToInstance<Task, Array<object>>(Task, json.data);
         saveLocalCurrentTasks(currentTasks, currentTasksTimestamp);
     }
 
     function saveCurrentTasks(tasks: Array<Task>) {
         console.info("! saveCurrentTasks");
-        const timestamp = (new Date()).getTime();
+        const timestamp = Date.now();
         let changed = false;
         // I don't remember, why did I write this code here:
         // tasks = JSON.parse(JSON.stringify(tasks));
@@ -142,7 +142,7 @@
     }
 
     async function saveTimerURLs() {
-        const timestamp = (new Date()).getTime();
+        const timestamp = Date.now();
         storageError = null;
         let json;
         try {
@@ -196,7 +196,7 @@
             order += 10;
         }
         togglTrackFavorites = togglTrackFavorites;
-        const timestamp = (new Date()).getTime();
+        const timestamp = Date.now();
         storageError = null;
         let json;
         try {
@@ -227,9 +227,9 @@
 
     function onWindowFocus() {
         console.debug("window: focus");
-        const timestamp = (new Date()).getTime();
+        const timestamp = Date.now();
         if (timestamp - lastUpdateTimestamp > 1000 * 60 * 5) {
-            lastUpdateTimestamp = (new Date()).getTime();
+            lastUpdateTimestamp = Date.now();
             loadServerCurrentTasks();
         }
     }

@@ -1,16 +1,16 @@
 import format from "date-fns/format";
 
-export function dateFormat(date: Date = null) {
+export function dateFormat(date: Date | null = null) {
     date ??= new Date();
     return format(date, "yyyy-MM-dd");
 }
 
-export function dateHumanFormat(date: Date = null) {
+export function dateHumanFormat(date: Date | null = null) {
     date ??= new Date();
     return format(date, "d MMM");
 }
 
-export function timeFormat(date: Date = null) {
+export function timeFormat(date: Date | null = null) {
     date ??= new Date();
     return format(date, "HH:mm");
 }

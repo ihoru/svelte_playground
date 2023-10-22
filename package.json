@@ -7,7 +7,7 @@
     "dev": "vite --port 9990",
     "dev-net": "vite --host --port 9990",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite build && vite preview --port 9990",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
