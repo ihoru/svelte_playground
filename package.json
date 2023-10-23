@@ -13,6 +13,9 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@tsconfig/svelte": "^5.0.0",
+    "@types/gapi": "^0.0.46",
+    "@types/gapi.client.calendar-v3": "^0.0.3",
+    "@types/google.accounts": "^0.0.13",
     "svelte": "^4.0.5",
     "svelte-check": "^3.4.6",
     "tslib": "^2.6.0",
@@ -20,6 +23,7 @@
     "vite": "^4.4.4"
   },
   "dependencies": {
+    "@fortawesome/free-brands-svg-icons": "^6.4.2",
     "@fortawesome/free-regular-svg-icons": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "class-transformer": "^0.5.1",

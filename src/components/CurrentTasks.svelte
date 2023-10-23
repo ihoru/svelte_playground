@@ -30,6 +30,9 @@
     import {faSave} from "@fortawesome/free-regular-svg-icons/faSave";
     import {faEdit} from "@fortawesome/free-regular-svg-icons/faEdit";
     import EditTTFavorite from "./EditTTFavorite.svelte";
+    import {loadEvents} from "../services/google";
+    import {faCalendarDays} from "@fortawesome/free-regular-svg-icons/faCalendarDays";
+    import {faGoogle} from "@fortawesome/free-brands-svg-icons/faGoogle";
 
     export let ignoreNextTasksUpdate: boolean = false;
     export let tasks: Array<Task> = [];
@@ -383,6 +386,21 @@
         silent || alert(`${diff} tasks deleted`);
     }
 
+    async function deleteGoogleEvents(silent) {
+        if (!silent && !confirm("Delete all events from Google Calendar?")) {
+            return;
+        }
+        const oldCount = tasks.length;
+        const newTasks = tasks.filter((task: Task) => !task.eventId);
+        const diff = oldCount - newTasks.length;
+        if (!diff) {
+            silent || alert("Nothing to delete");
+            return;
+        }
+        tasks = newTasks;
+        silent || alert(`${diff} events deleted`);
+    }
+
     async function transferDoneToPostponed() {
         let changed = false;
         tasks.forEach((task: Task) => {
@@ -408,8 +426,10 @@
             await deleteInternalDoneTasks(true);
             await deleteCompletelyDoneTasks(true);
             await deleteNonExistingImportedTasks(true);
+            await deleteGoogleEvents(true);
             await transferDoneToPostponed();
             await fetchTodoistTasks(false);
+            await loadGoogleCalendarEvents(false);
         } finally {
             brooming = false;
         }
@@ -499,7 +519,7 @@
                 }
                 return;
             }
-            const task = new Task(title, duration, todoistTaskId, todoistPriority);
+            const task = new Task({title, duration, todoistTaskId, todoistPriority});
             if (updateRecentlyChanged) {
                 task.recentlyChanged = true;
             }
@@ -621,6 +641,43 @@
         }
     }
 
+    let loadingEvents = false;
+
+    async function loadGoogleCalendarEvents(updateRecentlyChanged = true) {
+        loadingEvents = true;
+        const events: gapi.client.calendar.Event[] = await loadEvents();
+        loadingEvents = false;
+        if (!events.length) {
+            updateRecentlyChanged && alert("No events found");
+            return;
+        }
+        const newTasks = tasks.filter((task: Task) => !task.eventId);
+        for (const event of events) {
+            const task = new Task();
+            task.setGoogleEvent(event);
+            if (updateRecentlyChanged) {
+                task.recentlyChanged = true;
+            }
+            insertTaskByStartTime(task, newTasks);
+        }
+        tasks = newTasks;
+        if (updateRecentlyChanged) {
+            setRecentlyChangedTimeout();
+        }
+    }
+
+    function insertTaskByStartTime(addTask: Task, tasks: Task[]) {
+        recalculateTimes();
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            if (task.finishTime && task.finishTime > addTask.eventStartTime) {
+                tasks.splice(tasks.indexOf(task), 0, addTask);
+                return;
+            }
+        }
+        tasks.push(addTask);
+    }
+
     function recalculateNumbers() {
         let number = 0;
         for (const t of tasks) {
@@ -667,8 +724,6 @@
         tasks = tasks;
     }
 
-    let activeDropZoneIndex: number;
-    let draggingTaskId: string = null;
     let lastMoveTopAt: Date;
     let lastMoveTopIndex: number;
     let lastFocusedTaskId;
@@ -677,8 +732,14 @@
         lastMoveTopAt = lastMoveTopIndex = null;
     }
 
+    let resetRecentlyChangedTimeout;
+
     function resetRecentlyChanged() {
         resetLastMoveTopMemory();
+        if (resetRecentlyChangedTimeout) {
+            clearTimeout(resetRecentlyChangedTimeout);
+            resetRecentlyChangedTimeout = null;
+        }
         let changed = false;
         tasks.forEach((task: Task) => {
             if (task.recentlyChanged) {
@@ -689,20 +750,17 @@
         if (changed) {
             tasks = tasks;
         }
-        if (recentlyChangedTimeout) {
-            clearTimeout(recentlyChangedTimeout);
-            recentlyChangedTimeout = null;
-        }
     }
-
-    let recentlyChangedTimeout;
 
     function setRecentlyChangedTimeout() {
-        if (recentlyChangedTimeout) {
-            clearTimeout(recentlyChangedTimeout);
+        if (resetRecentlyChangedTimeout) {
+            clearTimeout(resetRecentlyChangedTimeout);
         }
-        recentlyChangedTimeout = setTimeout(resetRecentlyChanged, 5 * 60 * 1000);
+        resetRecentlyChangedTimeout = setTimeout(resetRecentlyChanged, 5 * 60 * 1000);
     }
+
+    let activeDropZoneIndex: number;
+    let draggingTaskId: string = null;
 
     const taskActions = {
         async toggle(task: Task) {
@@ -805,8 +863,8 @@
         },
 
         async postpone(task: Task, dt: Date) {
-            const dueDate = utils.dateFormat(dt);
             setRecentlyChangedTimeout();
+            const dueDate = utils.dateFormat(dt);
             task.postponed = dateHumanFormat(dt);
             task.recentlyChanged = true;
             tasks = tasks;
@@ -976,7 +1034,7 @@
                             duration = v[0];
                             title = v[1];
                         }
-                        return new Task(title, duration);
+                        return new Task({title, duration});
                     });
                     tasks.splice(index, 0, ...tasksToAdd);
                     tasks = tasks;
@@ -996,7 +1054,7 @@
             const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
             const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
             const noSpecial = !event.altKey && !event.shiftKey && !event.ctrlKey;
-            const inputType = ref.classList.contains("title") ? "title" : "duration";
+            const inputType = ref.classList.contains("titleInput") ? "title" : "duration";
             let focusOn;
             let focusTask: Task | null;
             if (["ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(event.key)) {
@@ -1035,6 +1093,9 @@
                 if (!focusTask) {
                     await tick();
                 }
+                if (focusOn.style.display === "none") {
+                    focusOn.style.display = "";
+                }
                 focusOn.focus();
             }
         },
@@ -1046,7 +1107,7 @@
             const onlyCtrl = !event.altKey && !event.shiftKey && event.ctrlKey;
             const onlyShift = !event.altKey && event.shiftKey && !event.ctrlKey;
             const noSpecial = !event.altKey && !event.shiftKey && !event.ctrlKey;
-            const inputType = ref.classList.contains("title") ? "title" : "duration";
+            const inputType = ref.classList.contains("titleInput") ? "title" : "duration";
             let focusOn;
             let focusTask: Task | null;
             if (event.key === "Delete" && onlyAlt) {
@@ -1085,11 +1146,14 @@
                 if (!focusTask) {
                     await tick();
                 }
+                if (focusOn.style.display === "none") {
+                    focusOn.style.display = "";
+                }
                 focusOn.focus();
             }
         },
 
-        inputBlur(task: Task, event: KeyboardEvent) {
+        titleInputBlur(task: Task, event: KeyboardEvent) {
             event.target.value = task.title = task.title.trim();
         },
 
@@ -1208,7 +1272,7 @@
             <Fa icon="{faXmark}"/>
         </button>
         <button
-                disabled="{!recentlyChangedTimeout}"
+                disabled="{!resetRecentlyChangedTimeout}"
                 on:click="{() => resetRecentlyChanged()}"
                 tabindex="-1"
         >
@@ -1237,6 +1301,14 @@
                 <Fa icon="{faUpload}"/>
             </button>
         {/if}
+        <button
+                disabled="{loadingEvents}"
+                on:click="{() => loadGoogleCalendarEvents()}"
+                tabindex="-1"
+        >
+            <Fa icon="{faGoogle}"/>
+            <Fa icon="{faCalendarDays}"/>
+        </button>
     </div>
     {#if showDeletePanel && !brooming}
         <div class="delete">
@@ -1283,6 +1355,12 @@
                     on:click="{() => deleteNonExistingImportedTasks()}"
             >
                 imported deleted
+            </button>
+            <button
+                    tabindex="-1"
+                    on:click="{() => deleteGoogleEvents()}"
+            >
+                events
             </button>
         </div>
     {/if}

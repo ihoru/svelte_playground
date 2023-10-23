@@ -17,6 +17,8 @@
     import {faLocationDot} from "@fortawesome/free-solid-svg-icons/faLocationDot";
     import {faCirclePlay} from "@fortawesome/free-regular-svg-icons/faCirclePlay";
     import {doubleclicker} from "../lib/actions";
+    import {tick} from "svelte";
+    import {faCalendarDays} from "@fortawesome/free-regular-svg-icons/faCalendarDays";
 
     export let task: Task;
     export let index: number;
@@ -25,6 +27,27 @@
     export let actions;
     export let isDragging: boolean;
     export let hasTimer: boolean;
+
+    let showTitleInput = false;
+
+    async function toggleTitleInput(e) {
+        showTitleInput = !showTitleInput;
+        if (showTitleInput) {
+            await tick();
+            refTitle.focus();
+        }
+    }
+
+    function titleInputBlur(event) {
+        showTitleInput = false;
+        actions.titleInputBlur(task, event);
+    }
+
+    async function titleInputFocus(event) {
+        showTitleInput = true;
+        refTitle.setSelectionRange(0, 0);
+        actions.inputFocus(task, event);
+    }
 
 </script>
 
@@ -87,7 +110,7 @@
                 <Fa icon="{faClockRotateLeft}"/>
             </button>
         {:else if !task.todoistTaskId && !task.done}
-            {#if task.title === ""}
+            {#if task.title === "" || task.eventId}
                 <span></span>
             {:else}
                 <button
@@ -125,22 +148,23 @@
             <span></span>
         {/if}
     </div>
-    <input bind:this="{refDuration}"
-           bind:value="{task.duration}"
-           class="duration"
-           enterkeyhint="Next"
-           min="0"
-           on:focus="{(event) => actions.inputFocus(task, event)}"
-           on:input="{actions.updated}"
-           on:keydown="{(event) => actions.inputKeyDown(task, event, refDuration)}"
-           on:keyup="{(event) => actions.inputKeyUp(task, event, refDuration)}"
-           on:paste="{(event) => actions.paste(task, event)}"
-           readonly="{task.done}"
-           tabindex="{task.done ? -1 : 0}"
-           type="number"
+    <input
+            bind:this="{refDuration}"
+            bind:value="{task.duration}"
+            class="durationInput"
+            enterkeyhint="Next"
+            min="0"
+            on:focus="{(event) => actions.inputFocus(task, event)}"
+            on:input="{actions.updated}"
+            on:keydown="{(event) => actions.inputKeyDown(task, event, refDuration)}"
+            on:keyup="{(event) => actions.inputKeyUp(task, event, refDuration)}"
+            on:paste="{(event) => actions.paste(task, event)}"
+            readonly="{task.done}"
+            tabindex="{task.done ? -1 : 0}"
+            type="number"
     />
     <a
-            class="priority priority{task.todoistPriority}"
+            class="priority"
             class:priority1="{task.todoistPriority === 1}"
             class:priority2="{task.todoistPriority === 2}"
             class:priority3="{task.todoistPriority === 3}"
@@ -151,21 +175,40 @@
     >
         {#if task.todoistPriority > 0}
             <Fa icon="{faGripLinesVertical}"/>
+        {:else if task.eventLink}
+            <Fa icon="{faCalendarDays}"/>
         {/if}
     </a>
-    <input bind:this="{refTitle}"
-           bind:value="{task.title}"
-           class="title"
-           enterkeyhint="Enter"
-           on:blur="{(event) => actions.inputBlur(task, event)}"
-           on:focus="{(event) => actions.inputFocus(task, event)}"
-           on:input="{actions.updated}"
-           on:keydown="{(event) => actions.inputKeyDown(task, event, refTitle)}"
-           on:keyup="{(event) => actions.inputKeyUp(task, event, refTitle)}"
-           on:paste="{(event) => actions.paste(task, event)}"
-           readonly="{task.done}"
-           tabindex="{task.done ? -1 : 0}"
-    />
+    <div class="titleContainer">
+        <span
+                on:click="{toggleTitleInput}"
+                style:display="{showTitleInput ? 'none' : 'block'}"
+        >
+            <span class:startTimePassed="{task.eventStartTimePassed}">
+                {task.eventStartTime || ''}
+            </span>
+            {#if task.title}
+                {task.title}
+            {:else}
+                &nbsp;
+            {/if}
+        </span>
+        <input
+                bind:this="{refTitle}"
+                bind:value="{task.title}"
+                class="titleInput"
+                enterkeyhint="Enter"
+                on:blur="{titleInputBlur}"
+                on:focus="{titleInputFocus}"
+                on:input="{actions.updated}"
+                on:keydown="{(event) => actions.inputKeyDown(task, event, refTitle)}"
+                on:keyup="{(event) => actions.inputKeyUp(task, event, refTitle)}"
+                on:paste="{(event) => actions.paste(task, event)}"
+                readonly="{task.done}"
+                style:display="{showTitleInput ? 'block' : 'none'}"
+                tabindex="{task.done ? -1 : 0}"
+        />
+    </div>
     <div class="additionalActions">
         <button
                 class="afterFocused"
@@ -214,7 +257,7 @@
             3.5rem              /* .time */
             7.5rem                /* .mainActions */
             2rem                /* .duration */
-            0.8rem              /* .priority */
+            1rem              /* .priority */
             minmax(10rem, auto)  /* .title */
             6.5rem /* .additionalActions */;
         font-family: monospace;
@@ -228,25 +271,16 @@
         opacity: .5;
     }
 
+    .task.even {
+        background-color: #eeeeee;
+    }
+
     .task.postponed {
         background-color: rgba(255, 255, 180, 30%);
     }
 
-    .task.even.postponed {
-        background-color: rgba(255, 255, 180, 60%);
-    }
-
-
     .task.recentlyChanged {
         background-color: rgba(180, 188, 255, 0.3);
-    }
-
-    .task.even.recentlyChanged {
-        background-color: rgba(180, 188, 255, 60%);
-    }
-
-    .task.even {
-        background-color: #eeeeee;
     }
 
     .task.isDragging {
@@ -273,11 +307,30 @@
         padding: 0;
     }
 
-    .task.done .title {
+    .task div.titleContainer {
+        text-align: left;
+    }
+
+    .task div.titleContainer span {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        font-size: 1rem;
+    }
+
+    .startTimePassed {
+        color: red;
+    }
+
+    .titleInput {
+        width: 100%;
+    }
+
+    .task.done .titleInput {
         text-decoration: line-through;
     }
 
-    .duration {
+    .durationInput {
         text-align: center;
     }
 
@@ -306,6 +359,10 @@
     .priority {
         text-align: center;
         opacity: 0.8;
+    }
+
+    .priority, .priority:visited, .priority:active {
+        color: rgb(26, 115, 232);
     }
 
     .priority1, .priority1:visited, .priority1:active {

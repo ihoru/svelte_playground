@@ -1,31 +1,55 @@
-import {randomId} from "../lib/utils";
+import parseISO from "date-fns/parseISO";
+import * as utils from "../lib/utils";
 
 export default class Task {
-    constructor(
-        public title: string = "",
-        public duration: number | null = null,
-        public todoistTaskId: string = "",
-        public todoistPriority: number = 0,
-        public number: number | null = null,
-        public id: string = randomId(),
-        public startTime: string | null = null,
-        public finishTime: string | null = null,
-        public done: boolean = false,
-        public postponed: string = null,
-        public recentlyChanged: boolean = false,
-    ) {
+    id: string = utils.randomId();
+    title: string = "";
+    duration?: number;
+    number?: number;
+    startTime?: string;
+    finishTime?: string;
+    done: boolean = false;
+    postponed: string | null = null;
+    recentlyChanged: boolean = false;
+
+    // Todoist's Task
+    todoistTaskId?: string;
+    todoistPriority?: number;
+
+    // Google Calendar's Event
+    eventId?: string;
+    eventLink?: string;
+    eventStartTime?: string;
+
+    constructor(params?: Partial<Task>) {
+        Object.assign(this, params);
     }
 
-    getUrl() {
-        if (!this.todoistTaskId) {
-            return;
-        }
-        return `https://todoist.com/showTask?id=${this.todoistTaskId}`;
+    get eventStartTimePassed() {
+        return !this.done && this.startTime && this.eventStartTime && this.startTime > this.eventStartTime;
     }
 
     resetTodoist() {
         this.postponed = null;
         this.todoistTaskId = "";
         this.todoistPriority = 0;
+    }
+
+    getUrl() {
+        if (this.todoistTaskId) {
+            return `https://todoist.com/showTask?id=${this.todoistTaskId}`;
+        } else if (this.eventLink) {
+            return this.eventLink;
+        }
+    }
+
+    setGoogleEvent(event: gapi.client.calendar.Event) {
+        this.eventId = event.id;
+        this.title = event.summary!;
+        const start = parseISO(event.start!.dateTime!);
+        const end = parseISO(event.end!.dateTime!);
+        this.duration = (end.getTime() - start.getTime()) / 1000 / 60;
+        this.eventStartTime = utils.timeFormat(start);
+        this.eventLink = event.htmlLink!;
     }
 }
