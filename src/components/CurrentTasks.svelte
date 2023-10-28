@@ -324,25 +324,22 @@
             return;
         }
         const ids: string[] = tasks
-            .filter((task: Task) => task.todoistTaskId && task.done)
+            .filter((task: Task) => task.todoistTaskId)
             .map((task: Task) => task.todoistTaskId as string);
         if (!ids.length) {
             silent || alert("Nothing to check");
             return;
         }
         const todoistTasks: TodoistTask[] = await todoistAPI.getTasksByIds(ids, false);
-        const completedTaskIds = todoistTasks
-            .filter((todoistTask: TodoistTask) => todoistTask.is_completed)
+        const uncompletedTaskIds = todoistTasks
+            .filter((todoistTask: TodoistTask) => !todoistTask.is_completed)
             .map((todoistTask: TodoistTask) => todoistTask.id);
-        const diff = ids.length - completedTaskIds.length;
+        const diff = ids.length - uncompletedTaskIds.length;
         if (!diff) {
             silent || alert("Nothing to delete");
             return;
         }
-        const newTasks = tasks.filter((task: Task) => task.todoistTaskId && !completedTaskIds.includes(task.todoistTaskId));
-        if (newTasks.length !== tasks.length) {
-            tasks = newTasks;
-        }
+        tasks = tasks.filter((task: Task) => !task.todoistTaskId || uncompletedTaskIds.includes(task.todoistTaskId));
         silent || alert(`${diff} tasks deleted`);
     }
 
@@ -361,7 +358,9 @@
             return;
         }
         const newTasks = tasks.filter((task: Task) => !task.todoistTaskId);
-        if (newTasks.length !== tasks.length) {
+        if (newTasks.length === tasks.length) {
+            alert("Nothing to delete");
+        } else {
             tasks = newTasks;
         }
     }
@@ -385,7 +384,7 @@
             return;
         }
         const todoistTaskIds = todoistTasks.map((todoistTask: TodoistTask) => todoistTask.id);
-        const newTasks = tasks.filter((task: Task) => task.todoistTaskId && todoistTaskIds.includes(task.todoistTaskId));
+        const newTasks = tasks.filter((task: Task) => !task.todoistTaskId || todoistTaskIds.includes(task.todoistTaskId));
         if (newTasks.length !== tasks.length) {
             tasks = newTasks;
         }
