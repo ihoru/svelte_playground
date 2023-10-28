@@ -1404,7 +1404,11 @@
                 on:click="{toggleSearchPanel}"
                 tabindex="-1"
         >
-            <Fa icon="{faSearch}"/>
+            {#if showSearchInput}
+                <Fa icon="{faXmark}" fw/>
+            {:else}
+                <Fa icon="{faSearch}" fw/>
+            {/if}
         </button>
         {#if showSearchInput}
             <input type="text" id="searchInput"
@@ -1560,7 +1564,7 @@
     }
 
     #searchInput {
-        width: 14rem;
+        width: 13.5rem;
     }
 
     #searchBtn {
