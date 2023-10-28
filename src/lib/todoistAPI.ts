@@ -44,7 +44,7 @@ export class TodoistAPI {
         return data;
     }
 
-    async getTasksByIds(ids: Array<number>, sort = true) {
+    async getTasksByIds(ids: string[], sort = true) {
         if (!ids.length) {
             return [];
         }

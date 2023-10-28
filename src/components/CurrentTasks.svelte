@@ -100,12 +100,12 @@
 
     const taskTitleRefs: Map<string, HTMLInputElement> = new Map();
     const taskDurationRefs: Map<string, HTMLInputElement> = new Map();
-    let lastActiveElement: HTMLInputElement;
+    let lastActiveElement: HTMLInputElement | null;
     let lastTasksHash: string;
     let showDeletePanel = false;
 
     const todoistAccessToken = import.meta.env.MY_TODOIST_ACCESS_TOKEN || "";
-    const todoistAPI: TodoistAPI = todoistAccessToken ? new TodoistAPI(todoistAccessToken) : null;
+    const todoistAPI: TodoistAPI | null = todoistAccessToken ? new TodoistAPI(todoistAccessToken) : null;
     let loading = false;
     let brooming = false;
 
@@ -158,9 +158,9 @@
                     if (task.title) {
                         task.startTime = utils.timeFormat(now);
                     } else {
-                        task.startTime = null;
+                        delete task.startTime;
                     }
-                    task.finishTime = null;
+                    delete task.finishTime;
                 }
                 continue;
             }
@@ -171,11 +171,11 @@
         }
     }
 
-    async function tasksReorder(index: number = null) {
+    async function tasksReorder(index?: number) {
         resetLastMoveTopMemory();
         const focusedAt = document.activeElement;
         let refs;
-        if (focusedAt.tagName === "INPUT" && index !== null) {
+        if (focusedAt.tagName === "INPUT" && index !== undefined) {
             const classList = focusedAt.classList;
             if (classList.contains("duration")) {
                 refs = taskDurationRefs;
@@ -317,17 +317,20 @@
     }
 
     async function deleteCompletelyDoneTasks(silent) {
+        if (!todoistAPI) {
+            return;
+        }
         if (!silent && !confirm("Delete completely (in Todoist) done tasks?")) {
             return;
         }
-        const ids = tasks
+        const ids: string[] = tasks
             .filter((task: Task) => task.todoistTaskId && task.done)
-            .map((task: Task) => task.todoistTaskId);
+            .map((task: Task) => task.todoistTaskId as string);
         if (!ids.length) {
             silent || alert("Nothing to check");
             return;
         }
-        const todoistTasks = await todoistAPI.getTasksByIds(ids, false);
+        const todoistTasks: TodoistTask[] = await todoistAPI.getTasksByIds(ids, false);
         const completedTaskIds = todoistTasks
             .filter((todoistTask: TodoistTask) => todoistTask.is_completed)
             .map((todoistTask: TodoistTask) => todoistTask.id);
@@ -336,7 +339,7 @@
             silent || alert("Nothing to delete");
             return;
         }
-        const newTasks = tasks.filter((task: Task) => !completedTaskIds.includes(task.todoistTaskId));
+        const newTasks = tasks.filter((task: Task) => task.todoistTaskId && !completedTaskIds.includes(task.todoistTaskId));
         if (newTasks.length !== tasks.length) {
             tasks = newTasks;
         }
@@ -364,10 +367,13 @@
     }
 
     async function deleteNonExistingImportedTasks(silent) {
+        if (!todoistAPI) {
+            return;
+        }
         if (!silent && !confirm("Delete imported not existing anymore tasks?")) {
             return;
         }
-        const ids = tasks.filter((task: Task) => task.todoistTaskId).map((task: Task) => task.todoistTaskId);
+        const ids = tasks.map((task: Task) => task.todoistTaskId || "").filter(Boolean);
         if (!ids.length) {
             silent || alert("Nothing to check");
             return;
@@ -379,7 +385,7 @@
             return;
         }
         const todoistTaskIds = todoistTasks.map((todoistTask: TodoistTask) => todoistTask.id);
-        const newTasks = tasks.filter((task: Task) => todoistTaskIds.includes(task.todoistTaskId));
+        const newTasks = tasks.filter((task: Task) => task.todoistTaskId && todoistTaskIds.includes(task.todoistTaskId));
         if (newTasks.length !== tasks.length) {
             tasks = newTasks;
         }
@@ -407,7 +413,7 @@
             if (task.todoistTaskId && task.done) {
                 task.done = false;
                 task.postponed = "?";
-                task.finishTime = null;
+                delete task.finishTime;
                 changed = true;
             }
         });
@@ -436,6 +442,9 @@
     }
 
     async function fetchTodoistTasks(updateRecentlyChanged = true) {
+        if (!todoistAPI) {
+            return;
+        }
         resetRecentlyChanged();
         loading = true;
         let todoistTasks;
@@ -497,7 +506,7 @@
             }
             const existingTask = tasks.find((task: Task) => task.todoistTaskId == todoistTaskId);
             if (existingTask) {
-                const durationHasChanged = existingTask.duration === null && duration;
+                const durationHasChanged = existingTask.duration === undefined && duration;
                 if (
                     existingTask.done
                     || existingTask.postponed
@@ -559,8 +568,12 @@
         if (!todoistTaskIds.length) {
             return;
         }
-        const todoistTasks = Object.fromEntries((await todoistAPI.getTasksByIds(todoistTaskIds, false))
-            .map((todoistTask: TodoistTask) => [todoistTask.id, todoistTask]));
+        if (!todoistAPI) {
+            return;
+        }
+        const todoistTasks = await todoistAPI.getTasksByIds(todoistTaskIds, false);
+        const todoistTasksPairs: Array<[string, TodoistTask]> = todoistTasks.map((todoistTask: TodoistTask) => [todoistTask.id, todoistTask]);
+        const todoistTasksMap = Object.fromEntries(todoistTasksPairs);
         let changed = false;
         let index = tasks.length - 1;
         while (index >= 0) {
@@ -569,7 +582,7 @@
             if (!task.todoistTaskId || !todoistTaskIds.includes(task.todoistTaskId)) {
                 continue;
             }
-            const todoistTask: TodoistTask = todoistTasks[task.todoistTaskId];
+            const todoistTask: TodoistTask = todoistTasksMap[task.todoistTaskId];
             if (!todoistTask) {
                 // task was deleted in Todoist
                 tasks.splice(index + 1, 1); // we use reversed while because of this deletion
@@ -593,11 +606,14 @@
     }
 
     async function uploadTodoistTasks() {
+        if (!todoistAPI) {
+            return;
+        }
         loading = true;
         try {
             let todoistTasks;
             const ids = tasks.map(
-                (task: Task) => !task.done && !task.postponed && task.todoistTaskId,
+                (task: Task) => !task.done && !task.postponed && task.todoistTaskId || "",
             ).filter(Boolean);
             if (!ids.length) {
                 alert("Nothing to save");
@@ -682,7 +698,7 @@
         let number = 0;
         for (const t of tasks) {
             if (t.done || t.postponed || !t.duration && !t.title) {
-                t.number = null;
+                delete t.number;
             } else {
                 t.number = ++number;
             }
@@ -714,6 +730,9 @@
     }
 
     async function createTodoistTask(task: Task, dueDate: string) {
+        if (!todoistAPI) {
+            return;
+        }
         let title = task.title;
         if (task.duration) {
             title += ` ${task.duration}m`;
@@ -724,8 +743,8 @@
         tasks = tasks;
     }
 
-    let lastMoveTopAt: Date;
-    let lastMoveTopIndex: number;
+    let lastMoveTopAt: Date | null = null;
+    let lastMoveTopIndex: number | null = null;
     let lastFocusedTaskId;
 
     function resetLastMoveTopMemory() {
@@ -759,15 +778,15 @@
         resetRecentlyChangedTimeout = setTimeout(resetRecentlyChanged, 5 * 60 * 1000);
     }
 
-    let activeDropZoneIndex: number;
-    let draggingTaskId: string = null;
+    let activeDropZoneIndex: number | null = null;
+    let draggingTaskId: string | null = null;
 
     const taskActions = {
         async toggle(task: Task) {
             setRecentlyChangedTimeout();
             task.done = !task.done;
             task.recentlyChanged = true;
-            const index = findTaskIndex(task.id);
+            const index = findTaskIndex(task.id) as number;
             if (task.done) {
                 if (!task.duration && !task.title) {
                     // delete empty task
@@ -775,11 +794,11 @@
                     tasks = tasks;
                     return;
                 }
-                task.startTime = null;
+                delete task.startTime;
                 task.finishTime = utils.timeFormat();
                 task.postponed = null;
                 tasks = tasks;
-                if (!task.todoistTaskId) {
+                if (!task.todoistTaskId || !todoistAPI) {
                     return;
                 }
                 const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
@@ -798,7 +817,7 @@
                 }
             } else {
                 tasks = tasks;
-                if (!task.todoistTaskId) {
+                if (!task.todoistTaskId || !todoistAPI) {
                     return;
                 }
                 const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
@@ -817,27 +836,31 @@
         },
 
         delete(task: Task) {
-            const index = findTaskIndex(task.id);
+            const index = findTaskIndex(task.id) as number;
             tasks.splice(index, 1);
             tasks = tasks;
         },
 
         async restore(task: Task) {
+            if (!todoistAPI) {
+                return;
+            }
             setRecentlyChangedTimeout();
             task.postponed = null;
             task.recentlyChanged = true;
             tasks = tasks;
-            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+            const todoistTaskId = task.todoistTaskId as string;
+            const todoistTask = await todoistAPI.getTask(todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();
                 tasks = tasks;
                 return;
             }
             if (todoistTask.is_completed) {
-                await todoistAPI.reopen(task.todoistTaskId);
+                await todoistAPI.reopen(todoistTaskId);
             }
             const dueDate = utils.dateFormat();
-            await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
+            await todoistAPI.postpone(todoistTaskId, dueDate, todoistTask);
         },
 
         create(task: Task) {
@@ -863,16 +886,20 @@
         },
 
         async postpone(task: Task, dt: Date) {
+            if (!todoistAPI) {
+                return;
+            }
             setRecentlyChangedTimeout();
             const dueDate = utils.dateFormat(dt);
             task.postponed = dateHumanFormat(dt);
             task.recentlyChanged = true;
             tasks = tasks;
-            const focusedAt = document.activeElement;
+            const focusedAt = document.activeElement as HTMLInputElement;
             if (focusedAt && focusedAt.tagName === "INPUT") {
                 focusedAt.blur();
             }
-            const todoistTask = await todoistAPI.getTask(task.todoistTaskId);
+            const todoistTaskId = task.todoistTaskId as string;
+            const todoistTask = await todoistAPI.getTask(todoistTaskId);
             if (!todoistTask) {
                 task.resetTodoist();
                 tasks = tasks;
@@ -882,7 +909,7 @@
                 return;
             }
             if (!todoistTask.due || todoistTask.due.date === utils.dateFormat() || isPast(parseISO(todoistTask.due.date))) {
-                await todoistAPI.postpone(task.todoistTaskId, dueDate, todoistTask);
+                await todoistAPI.postpone(todoistTaskId, dueDate, todoistTask);
             }
         },
 
@@ -922,8 +949,8 @@
                 return;
             }
             const newDisplayIndex = Math.max(0, displayIndex - size);
-            const index = findTaskIndex(task.id);
-            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
+            const index = findTaskIndex(task.id) as number;
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id) as number;
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
@@ -938,8 +965,8 @@
                 return;
             }
             const newDisplayIndex = Math.min(displayTasks.length - 1, displayIndex + size);
-            const index = findTaskIndex(task.id);
-            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
+            const index = findTaskIndex(task.id) as number;
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id) as number;
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
@@ -953,7 +980,7 @@
                 alert("Focus in any task first");
                 return;
             }
-            const index = findTaskIndex(task.id);
+            const index = findTaskIndex(task.id) as number;
             const newIndex = findTaskIndex(lastFocusedTaskId) + 1;
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
@@ -984,8 +1011,8 @@
                 lastMoveTopIndex = newDisplayIndex;
             }
             lastMoveTopAt = now;
-            const index = findTaskIndex(displayTasks[displayIndex].id);
-            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
+            const index = findTaskIndex(displayTasks[displayIndex].id) as number;
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id) as number;
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
@@ -1000,8 +1027,8 @@
                 return;
             }
             let newDisplayIndex = displayTasks.length - 1;
-            const index = findTaskIndex(displayTasks[displayIndex].id);
-            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id);
+            const index = findTaskIndex(displayTasks[displayIndex].id) as number;
+            const newIndex = findTaskIndex(displayTasks[newDisplayIndex].id) as number;
             tasks.splice(index, 1);
             tasks.splice(newIndex, 0, task);
             tasks = tasks;
@@ -1015,7 +1042,7 @@
         },
 
         async paste(task: Task, event: ClipboardEvent) {
-            let index = findTaskIndex(task.id);
+            let index = findTaskIndex(task.id) as number;
             index += 1;
             const text = event.clipboardData?.getData("text/plain");
             if (text) {
@@ -1132,7 +1159,8 @@
             } else if (onlyAlt && event.key === "Enter") {
                 this.toggle(task).then();
             } else if (onlyShift && event.key === "Enter") {
-                focusTask = this.add(findTaskIndex(task.id));
+                const nextIndex = findTaskIndex(task.id) as number;
+                focusTask = this.add(nextIndex);
             } else {
                 return;
             }
@@ -1154,7 +1182,7 @@
         },
 
         titleInputBlur(task: Task, event: KeyboardEvent) {
-            event.target.value = task.title = task.title.trim();
+            (event.target as HTMLInputElement).value = task.title = task.title.trim();
         },
 
         inputFocus(task: Task, event: KeyboardEvent) {
@@ -1193,13 +1221,13 @@
             }
             let newIndex = parseInt(event.target.dataset.index);
             const dragTaskId = event.dataTransfer.getData("application/my-app");
-            const oldIndex = findTaskIndex(dragTaskId);
+            const oldIndex = findTaskIndex(dragTaskId) as number;
             const dragTask = tasks[oldIndex];
             const oldVisibleIndex = findVisibleTaskIndex(dragTaskId);
             if (oldVisibleIndex <= newIndex - 1) {
                 --newIndex;
             }
-            newIndex = findTaskIndex(displayTasks[newIndex].id);
+            newIndex = findTaskIndex(displayTasks[newIndex].id) as number;
             tasks.splice(oldIndex, 1);
             tasks.splice(newIndex, 0, dragTask);
             tasks = tasks;
@@ -1293,13 +1321,15 @@
             >
                 <Fa icon="{faDownload}"/>
             </button>
-            <button
-                    disabled="{loading || brooming}"
-                    tabindex="-1"
-                    on:click="{uploadTodoistTasks}"
-            >
-                <Fa icon="{faUpload}"/>
-            </button>
+            {#if todoistAPI}
+                <button
+                        disabled="{loading || brooming}"
+                        tabindex="-1"
+                        on:click="{uploadTodoistTasks}"
+                >
+                    <Fa icon="{faUpload}"/>
+                </button>
+            {/if}
         {/if}
         <button
                 disabled="{loadingEvents}"
@@ -1330,13 +1360,15 @@
             >
                 <Fa icon="{faClock}"/>
             </button>
-            <button
-                    tabindex="-1"
-                    on:click="{() => deleteCompletelyDoneTasks()}"
-            >
-                completely
-                <Fa icon="{faCircleCheck}"/>
-            </button>
+            {#if todoistAPI}
+                <button
+                        tabindex="-1"
+                        on:click="{() => deleteCompletelyDoneTasks()}"
+                >
+                    completely
+                    <Fa icon="{faCircleCheck}"/>
+                </button>
+            {/if}
             <button
                     tabindex="-1"
                     on:click="{() => deleteInternalDoneTasks()}"
@@ -1350,12 +1382,14 @@
             >
                 imported
             </button>
-            <button
-                    tabindex="-1"
-                    on:click="{() => deleteNonExistingImportedTasks()}"
-            >
-                imported deleted
-            </button>
+            {#if todoistAPI}
+                <button
+                        tabindex="-1"
+                        on:click="{() => deleteNonExistingImportedTasks()}"
+                >
+                    imported deleted
+                </button>
+            {/if}
             <button
                     tabindex="-1"
                     on:click="{() => deleteGoogleEvents()}"
@@ -1430,6 +1464,7 @@
                             bind:refTitle="{taskTitleRefs[task.id]}"
                             isDragging="{draggingTaskId === task.id}"
                             hasTimer="{timerURLs[task.todoistTaskId]}"
+                            todoistAPIAvailable="{!!todoistAPI}"
                             {index}
                             {task}
                     />
@@ -1577,7 +1612,7 @@
     }
 
     .dropZone.isActive hr {
-        border-top: 1px solid gray;
+        border-top: 1px solid #808080;
     }
 
     .togglTrackFavorites {

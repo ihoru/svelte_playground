@@ -27,6 +27,7 @@
     export let actions;
     export let isDragging: boolean;
     export let hasTimer: boolean;
+    export let todoistAPIAvailable: boolean;
 
     let showTitleInput = false;
 
@@ -48,6 +49,7 @@
         refTitle.setSelectionRange(0, 0);
         actions.inputFocus(task, event);
     }
+
 
 </script>
 
@@ -112,7 +114,7 @@
         {:else if !task.todoistTaskId && !task.done}
             {#if task.title === "" || task.eventId}
                 <span></span>
-            {:else}
+            {:else if todoistAPIAvailable}
                 <button
                         class="create"
                         on:click="{() => actions.create(task)}"
