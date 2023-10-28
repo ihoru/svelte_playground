@@ -84,8 +84,7 @@
         console.info("! saveCurrentTasks");
         const timestamp = Date.now();
         let changed = false;
-        // I don't remember, why did I write this code here:
-        // tasks = JSON.parse(JSON.stringify(tasks));
+        tasks = JSON.parse(JSON.stringify(tasks)); // To avoid changing current data
         const ids = new Set();
         const newTasks = tasks.filter((task: Task) => {
             if (task.recentlyChanged) {
