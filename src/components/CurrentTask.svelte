@@ -328,7 +328,7 @@
         width: 100%;
     }
 
-    .task.done .titleInput {
+    .task.done .titleContainer span {
         text-decoration: line-through;
     }
 
