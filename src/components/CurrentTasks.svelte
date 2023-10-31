@@ -668,6 +668,9 @@
         }
         const newTasks = tasks.filter((task: Task) => !task.eventId);
         for (const event of events) {
+            if (!event.start!.dateTime || !event.end!.dateTime) {
+                continue;
+            }
             const task = new Task();
             task.setGoogleEvent(event);
             if (updateRecentlyChanged) {
