@@ -67,7 +67,6 @@
             lastUpdateTimestamp = Date.now();
         } else {
             applyCurrentTasksFromServer(json);
-            alert("Server has newer data");
         }
         console.debug("server: saved");
     }
