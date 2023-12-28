@@ -449,17 +449,6 @@
         let todoistTasks;
         try {
             todoistTasks = await todoistAPI.getTasks();
-            if (todoistTasks.length) {
-                const firstWithDuration = todoistTasks.find((todoistTask: TodoistTask) => todoistTask.duration);
-                if (firstWithDuration) {
-                    console.error("Seems like Todoist has fixed the bug! 🍾🍾🍾");
-                } else {
-                    // probably, there should be tasks with duration set, so to check that, let's request tasks by ids
-                    // it works correctly in Todoist in this case
-                    const ids = todoistTasks.map((todoistTask: TodoistTask) => todoistTask.id);
-                    todoistTasks = await todoistAPI.getTasksByIds(ids);
-                }
-            }
         } catch (e) {
             console.error(e);
             alert("Error fetching tasks from Todoist");

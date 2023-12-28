@@ -39,7 +39,10 @@ export class TodoistAPI {
 
     async getTasks(when: "today" | "tomorrow" = "today") {
         const filter = `(${when} | overdue) & (assigned to:me | !assigned)`;
-        const data = await this._fetch<Array<TodoistTask>>(`tasks?filter=${encodeURIComponent(filter)}`);
+        let data = await this._fetch<Array<TodoistTask>>(`tasks?filter=${encodeURIComponent(filter)}`);
+        data = data.filter(function (todoistTask: TodoistTask) {
+            return !todoistTask.is_completed;
+        });
         data.sort(this._sortTasks);
         return data;
     }
