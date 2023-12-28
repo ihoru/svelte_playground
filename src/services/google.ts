@@ -114,6 +114,7 @@ async function listTodayEvents(calendarId: string) {
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             showDeleted: false,
             singleEvents: true,
+            maxAttendees: 1,
             orderBy: "startTime",
         });
         console.debug(response);

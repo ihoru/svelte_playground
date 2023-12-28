@@ -660,6 +660,9 @@
             if (!event.start!.dateTime || !event.end!.dateTime) {
                 continue;
             }
+            if (event.transparency === "transparent") {
+                continue;
+            }
             const task = new Task();
             task.setGoogleEvent(event);
             if (updateRecentlyChanged) {
