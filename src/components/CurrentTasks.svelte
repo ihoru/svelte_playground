@@ -143,15 +143,16 @@
         ignoreNextTasksUpdate = false;
     }
 
-    function recalculateTimes() {
+    function recalculateTimes(currentTasks) {
+        currentTasks = currentTasks || tasks;
         let startAt = new Date();
         const gap = parseInt(import.meta.env.MY_GAP_BETWEEN_TASKS_MINUTES) || 0;
         if (gap > 0) {
             startAt = addMinutes(startAt, gap - startAt.getMinutes() % gap);
         }
         let now = startAt;
-        for (let i = 0; i < tasks.length; i++) {
-            const task = tasks[i];
+        for (let i = 0; i < currentTasks.length; i++) {
+            const task = currentTasks[i];
             const duration = task.duration;
             if (task.done || task.postponed || !duration || duration <= 0) {
                 if (!task.done) {
@@ -677,10 +678,10 @@
     }
 
     function insertTaskByStartTime(addTask: Task, tasks: Task[]) {
-        recalculateTimes();
+        recalculateTimes(tasks);
         for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
-            if (task.finishTime && task.finishTime > addTask.eventStartTime) {
+            if (task.finishTime && task.finishTime >= addTask.eventStartTime) {
                 tasks.splice(tasks.indexOf(task), 0, addTask);
                 return;
             }
