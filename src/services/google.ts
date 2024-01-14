@@ -17,7 +17,7 @@ export async function loadEvents() {
     result.sort((a, b) => {
         const aStart = a.start?.dateTime || "";
         const bStart = b.start?.dateTime || "";
-        return aStart >= bStart ? 1 : -1;
+        return aStart < bStart ? -1 : 0;
     });
     return result;
 }
