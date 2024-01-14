@@ -434,14 +434,14 @@
             await deleteNonExistingImportedTasks(true);
             await deleteGoogleEvents(true);
             await transferDoneToPostponed();
-            await fetchTodoistTasks(false);
+            await fetchTodoistTasks(false, false);
             await loadGoogleCalendarEvents(false);
         } finally {
             brooming = false;
         }
     }
 
-    async function fetchTodoistTasks(updateRecentlyChanged = true) {
+    async function fetchTodoistTasks(updateRecentlyChanged = true, showAlerts = true) {
         if (!todoistAPI) {
             return;
         }
@@ -539,9 +539,13 @@
         if (tasksToAdd.length) {
             tasks.splice(tasks.length, 0, ...tasksToAdd);
         } else if (taskUpdated) {
-            alert("No new tasks, but something has changed");
+            if (showAlerts) {
+                alert("No new tasks, but something has changed");
+            }
         } else {
-            alert("Nothing has changed");
+            if (showAlerts) {
+                alert("Nothing has changed");
+            }
         }
         if (tasksToAdd.length || taskUpdated) {
             tasks = tasks;
