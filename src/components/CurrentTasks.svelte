@@ -844,10 +844,13 @@
             }
         },
 
-        delete(task: Task) {
+        async delete(task: Task, syncSource = false) {
             const index = findTaskIndex(task.id) as number;
             tasks.splice(index, 1);
             tasks = tasks;
+            if (syncSource && task.todoistTaskId && todoistAPI) {
+                await todoistAPI.delete(task.todoistTaskId);
+            }
         },
 
         async restore(task: Task) {
@@ -1153,7 +1156,7 @@
                     ++index;
                 }
                 focusTask = displayTasks[index];
-                this.delete(task);
+                await this.delete(task);
             } else if (noSpecial && event.key === "ArrowLeft" && inputType === "title" && !task.title) {
                 focusOn = taskDurationRefs[task.id];
             } else if (noSpecial && event.key === "ArrowRight" && inputType === "duration" && !task.duration) {

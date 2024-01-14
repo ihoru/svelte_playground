@@ -78,6 +78,10 @@ export class TodoistAPI {
         return this._fetch(`tasks/${taskId}/reopen`, {method: "POST"});
     }
 
+    delete(taskId: string): Promise<boolean> {
+        return this._fetch(`tasks/${taskId}`, {method: "DELETE"});
+    }
+
     async postpone(taskId: string, dueDate: string, task: TodoistTask | null = null) {
         if (!task) {
             task = await this.getTask(taskId) as TodoistTask;

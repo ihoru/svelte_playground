@@ -76,8 +76,9 @@
     </div>
     <div class="mainActions">
         <button
-                on:click="{() => actions.delete(task)}"
+                on:doubleclick="{() => actions.delete(task, true)}" on:singleclick="{() => actions.delete(task)}"
                 tabindex="-1"
+                use:doubleclicker
         >
             <Fa icon="{faXmark}"/>
         </button>
