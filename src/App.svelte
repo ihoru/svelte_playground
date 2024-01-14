@@ -169,6 +169,7 @@
             }
             delete timerURLs[todoistTaskId];
         }
+        timerURLs = timerURLs;
         saveTimerURLs();
     }
 
