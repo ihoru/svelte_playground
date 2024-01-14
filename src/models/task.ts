@@ -45,8 +45,11 @@ export default class Task {
     }
 
     displayPostponed() {
-        const d = parseISO(this.postponed!);
-        return d ? dateHumanFormat(d) : this.postponed;
+        try {
+            return dateHumanFormat(parseISO(this.postponed!));
+        } catch (e) {
+            return this.postponed;
+        }
     }
 
     setGoogleEvent(event: gapi.client.calendar.Event) {
