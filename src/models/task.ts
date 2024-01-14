@@ -1,5 +1,6 @@
 import parseISO from "date-fns/parseISO";
 import * as utils from "../lib/utils";
+import {dateHumanFormat} from "../lib/utils";
 
 export default class Task {
     id: string = utils.randomId();
@@ -41,6 +42,11 @@ export default class Task {
         } else if (this.eventLink) {
             return this.eventLink;
         }
+    }
+
+    displayPostponed() {
+        const d = parseISO(this.postponed!);
+        return d ? dateHumanFormat(d) : this.postponed;
     }
 
     setGoogleEvent(event: gapi.client.calendar.Event) {

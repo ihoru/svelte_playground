@@ -67,7 +67,7 @@
     <div class="number">{task.number || ''}</div>
     <div class="time">
         {#if task.postponed}
-            {task.postponed}
+            {task.displayPostponed()}
         {:else if task.startTime}
             {task.startTime}
         {:else if task.finishTime}

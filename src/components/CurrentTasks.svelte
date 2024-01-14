@@ -1,6 +1,5 @@
 <script lang="ts">
     import * as utils from "../lib/utils";
-    import {dateHumanFormat} from "../lib/utils";
     import CurrentTask from "./CurrentTask.svelte";
     import Fa from "svelte-fa/src/fa.svelte";
     import Task from "../models/task";
@@ -85,7 +84,7 @@
             }
             return 0;
         } else if (filterBy === FILTERS.POSTPONED) {
-            return taskA.title < taskB.title ? -1 : 0;
+            return taskA.postponed < taskB.postponed ? -1 : 0;
         }
     });
     $: tasks && tasksUpdated();
@@ -584,7 +583,7 @@
                 task.postponed = null;
             } else if (!todoistTask.is_completed) {
                 if (todoistTask.due) {
-                    task.postponed = dateHumanFormat(parseISO(todoistTask.due.date));
+                    task.postponed = todoistTask.due.date;
                 } else {
                     task.postponed = "N/A";
                 }
@@ -903,7 +902,7 @@
             }
             setRecentlyChangedTimeout();
             const dueDate = utils.dateFormat(dt);
-            task.postponed = dateHumanFormat(dt);
+            task.postponed = dueDate;
             task.recentlyChanged = true;
             tasks = tasks;
             const focusedAt = document.activeElement as HTMLInputElement;
