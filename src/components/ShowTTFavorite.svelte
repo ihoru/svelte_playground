@@ -4,7 +4,9 @@
     import {faPlay} from "@fortawesome/free-solid-svg-icons/faPlay";
 
     export let item: TTFavorite;
+    // noinspection JSUnusedGlobalSymbols
     export let index: number;
+    // noinspection JSUnusedGlobalSymbols
     export let deleteItem;
 
     function open() {

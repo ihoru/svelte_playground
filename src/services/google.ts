@@ -12,8 +12,13 @@ export async function loadEvents() {
     const result = [];
     for (const calendarId of CALENDAR_IDS) {
         const events = await listTodayEvents(calendarId);
-        result.push(...events as Array<gapi.client.calendar.Event>);
+        result.push(...events);
     }
+    result.sort((a, b) => {
+        const aStart = a.start?.dateTime || "";
+        const bStart = b.start?.dateTime || "";
+        return aStart >= bStart ? 1 : -1;
+    });
     return result;
 }
 
@@ -115,7 +120,6 @@ async function listTodayEvents(calendarId: string) {
             showDeleted: false,
             singleEvents: true,
             maxAttendees: 1,
-            orderBy: "startTime",
         });
         console.debug(response);
     } catch (err) {
@@ -123,5 +127,5 @@ async function listTodayEvents(calendarId: string) {
         return [];
     }
 
-    return response.result.items;
+    return response.result.items as gapi.client.calendar.Event[];
 }

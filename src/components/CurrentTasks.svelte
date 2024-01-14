@@ -660,12 +660,22 @@
             updateRecentlyChanged && alert("No events found");
             return;
         }
-        const newTasks = tasks.filter((task: Task) => !task.eventId);
+        const eventIds = events.map((event) => event.id);
+        const newTasks = tasks.filter((task: Task) => {
+            if (task.eventId) {
+                if (eventIds.includes(task.eventId)) {
+                    return false;
+                }
+                return task.done;
+            }
+            return true;
+        });
         for (const event of events) {
             if (!event.start!.dateTime || !event.end!.dateTime) {
                 continue;
             }
             if (event.transparency === "transparent") {
+                // skip events, when user is free
                 continue;
             }
             const task = new Task();
